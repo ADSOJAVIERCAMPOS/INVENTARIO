@@ -19,9 +19,13 @@ export default function Home() {
       <header className="bg-white shadow-md border-b-4 border-green-600">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center gap-4">
-            <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              SENA
-            </div>
+            <Image
+              src="/logoSena.png"
+              alt="Logo SENA"
+              width={120}
+              height={120}
+              className="object-contain"
+            />
             <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-800 mb-1">
                 Inventario Coordinación ADSO
@@ -36,8 +40,15 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            📦 Gestión de Inventario
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center justify-center">
+            <Image
+              src="/gestion.png"
+              alt="Gestión de Inventario"
+              width={80}
+              height={80}
+              className="object-contain inline-block mr-2"
+            />
+            Gestión de Inventario
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Herramienta digital para la gestión completa del inventario de la Coordinación ADSO, 
@@ -50,7 +61,13 @@ export default function Home() {
             href="/inventario"
             className="bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-lg text-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            <span className="text-2xl">📊</span>
+            <Image
+              src="/inventario.png"
+              alt="Acceder al Sistema de Inventario"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
             Acceder al Sistema de Inventario
           </Link>
 
@@ -64,7 +81,13 @@ export default function Home() {
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
-              <div className="text-4xl mb-4 text-center">�</div>
+              <Image
+                src="/sincronizar.png"
+                alt="Sincronizar"
+                width={40}
+                height={40}
+                className="object-contain mx-auto mb-4"
+              />
               <h3 className="font-bold text-lg mb-3 text-gray-800 text-center">Sincronizar</h3>
               <p className="text-gray-600 text-center">
                 Sincroniza datos con el servidor para mantener la información actualizada en tiempo real
