@@ -12,7 +12,7 @@
   "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev && start chrome http://localhost:3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
