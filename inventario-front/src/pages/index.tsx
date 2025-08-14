@@ -28,10 +28,10 @@ export default function Home() {
             />
             <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-800 mb-1">
-                Inventario Coordinación ADSO
+                INVENTARIO COORDINACIÓN ADSO
               </h1>
               <p className="text-lg text-green-600 font-semibold">
-                Servicio Nacional de Aprendizaje - SENA
+                CENTRO DE SERVICIOS FINANCIEROS
               </p>
             </div>
           </div>
@@ -51,8 +51,6 @@ export default function Home() {
             Gestión de Inventario
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Herramienta digital para la gestión completa del inventario de la Coordinación ADSO, 
-            con funcionalidades de importación y exportación de datos en formato Excel
           </p>
         </div>
 
@@ -76,7 +74,6 @@ export default function Home() {
               <div className="text-4xl mb-4 text-center">📁</div>
               <h3 className="font-bold text-lg mb-3 text-gray-800 text-center">Importar Excel</h3>
               <p className="text-gray-600 text-center">
-                Carga archivos Excel (.xlsx/.xls) con datos de inventario de forma rápida y segura
               </p>
             </div>
             
@@ -90,7 +87,6 @@ export default function Home() {
               />
               <h3 className="font-bold text-lg mb-3 text-gray-800 text-center">Sincronizar</h3>
               <p className="text-gray-600 text-center">
-                Sincroniza datos con el servidor para mantener la información actualizada en tiempo real
               </p>
             </div>
             
@@ -98,7 +94,6 @@ export default function Home() {
               <div className="text-4xl mb-4 text-center">📊</div>
               <h3 className="font-bold text-lg mb-3 text-gray-800 text-center">Exportar Reportes</h3>
               <p className="text-gray-600 text-center">
-                Genera y descarga reportes detallados en formato Excel para análisis y seguimiento
               </p>
             </div>
           </div>
@@ -110,10 +105,9 @@ export default function Home() {
                 Análisis y Desarrollo de Software 
               </h3>
               <p className="text-green-700">
-                ADSO
               </p>
               <p className="text-sm text-green-600 mt-2">
-                Centro de Servicios Financieros • Regional Bogotá
+                Bogotá
                </p>
             </div>
           </div>
@@ -124,7 +118,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-4 mb-2">
             <span>🚀</span>
-            <span> Next.js & Spring Boot</span>
+            <span> JAVIER CAMPOS </span>
           </div>
           <p className="text-sm text-gray-400">
             © 2025
