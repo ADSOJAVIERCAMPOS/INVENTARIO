@@ -19,6 +19,10 @@ public class ExcelService {
         try (InputStream inputStream = getClass().getResourceAsStream("/Inventario Fisico ADSO.xlsx");
              Workbook workbook = new XSSFWorkbook(inputStream)) {
 
+            if (inputStream == null) {
+                throw new RuntimeException("El archivo Excel no se encuentra en el directorio de recursos.");
+            }
+
             Sheet sheet = workbook.getSheetAt(0);
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) { // Empieza desde la segunda fila
@@ -32,7 +36,7 @@ public class ExcelService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error al cargar el archivo Excel: " + e.getMessage());
+            throw new RuntimeException("Error al cargar el archivo Excel: " + e.getMessage(), e);
         }
     }
 
