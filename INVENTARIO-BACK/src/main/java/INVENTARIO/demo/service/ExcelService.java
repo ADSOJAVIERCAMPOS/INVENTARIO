@@ -5,6 +5,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +14,11 @@ import java.util.List;
 public class ExcelService {
 
     private List<InventarioItem> inventarioItems = new ArrayList<>();
+    private final String rutaArchivo = "/Inventario Fisico ADSO.xlsx";
 
     @PostConstruct
     public void cargarInventarioDesdeExcel() {
-        try (InputStream inputStream = getClass().getResourceAsStream("/Inventario Fisico ADSO.xlsx");
+        try (InputStream inputStream = getClass().getResourceAsStream(rutaArchivo);
              Workbook workbook = new XSSFWorkbook(inputStream)) {
 
             if (inputStream == null) {
@@ -46,7 +48,34 @@ public class ExcelService {
 
     public void actualizarInventario(List<InventarioItem> nuevosItems) {
         inventarioItems = nuevosItems;
-        // Aquí puedes agregar lógica para guardar los cambios en el archivo Excel
+        guardarInventarioEnExcel();
+    }
+
+    private void guardarInventarioEnExcel() {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Inventario");
+
+            // Crear encabezados
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Número de Placa");
+            headerRow.createCell(1).setCellValue("Descripción");
+            headerRow.createCell(2).setCellValue("Cantidad");
+
+            // Agregar datos
+            for (int i = 0; i < inventarioItems.size(); i++) {
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue(inventarioItems.get(i).getNumeroPlaca());
+                row.createCell(1).setCellValue(inventarioItems.get(i).getDescripcion());
+                row.createCell(2).setCellValue(inventarioItems.get(i).getCantidad());
+            }
+
+            // Guardar archivo
+            try (FileOutputStream fileOutputStream = new FileOutputStream("src/main/resources/Inventario Fisico ADSO.xlsx")) {
+                workbook.write(fileOutputStream);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al guardar el archivo Excel: " + e.getMessage(), e);
+        }
     }
 
     private String getCellValue(Cell cell) {
