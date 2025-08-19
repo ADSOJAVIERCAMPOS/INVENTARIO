@@ -1,10 +1,11 @@
 import React from 'react';
-import Inventario from './components/Inventario'; // Importa el componente Inventario
+import SubirArchivo from './components/SubirArchivo';
 
 function App() {
     return (
         <div>
-            <Inventario /> {/* Usa el componente Inventario */}
+            <h1>Gestión de Inventario</h1>
+            <SubirArchivo />
         </div>
     );
 }

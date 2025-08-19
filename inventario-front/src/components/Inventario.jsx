@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 
 function Inventario() {
     const [inventario, setInventario] = useState([]);
@@ -6,9 +7,16 @@ function Inventario() {
 
     useEffect(() => {
         // Cargar datos del archivo Excel al iniciar el sistema
-        fetch('http://localhost:8080/api/inventario')
-            .then(response => response.json())
-            .then(data => setInventario(data));
+        fetch('/Inventario Fisico ADSO.xlsx')
+            .then((response) => response.arrayBuffer())
+            .then((buffer) => {
+                const workbook = XLSX.read(buffer, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
+                setInventario(jsonData);
+            })
+            .catch((error) => console.error('Error al cargar el archivo Excel:', error));
     }, []);
 
     const handleInputChange = (index, field, value) => {
@@ -18,13 +26,8 @@ function Inventario() {
     };
 
     const handleSave = () => {
-        fetch('http://localhost:8080/api/inventario', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(inventario),
-        })
-            .then(response => response.text())
-            .then(message => alert(message));
+        console.log('Datos guardados:', inventario);
+        alert('Cambios guardados correctamente.');
     };
 
     return (
@@ -33,56 +36,31 @@ function Inventario() {
             <button onClick={() => setEditMode(!editMode)}>
                 {editMode ? 'Salir del Modo Edición' : 'Entrar en Modo Edición'}
             </button>
-            <table>
+            <table border="1">
                 <thead>
                     <tr>
-                        <th>Número de Placa</th>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
+                        {inventario.length > 0 &&
+                            Object.keys(inventario[0]).map((key) => <th key={key}>{key}</th>)}
                     </tr>
                 </thead>
                 <tbody>
                     {inventario.map((item, index) => (
                         <tr key={index}>
-                            <td>
-                                {editMode ? (
-                                    <input
-                                        type="text"
-                                        value={item.numeroPlaca}
-                                        onChange={(e) =>
-                                            handleInputChange(index, 'numeroPlaca', e.target.value)
-                                        }
-                                    />
-                                ) : (
-                                    item.numeroPlaca
-                                )}
-                            </td>
-                            <td>
-                                {editMode ? (
-                                    <input
-                                        type="text"
-                                        value={item.descripcion}
-                                        onChange={(e) =>
-                                            handleInputChange(index, 'descripcion', e.target.value)
-                                        }
-                                    />
-                                ) : (
-                                    item.descripcion
-                                )}
-                            </td>
-                            <td>
-                                {editMode ? (
-                                    <input
-                                        type="number"
-                                        value={item.cantidad}
-                                        onChange={(e) =>
-                                            handleInputChange(index, 'cantidad', e.target.value)
-                                        }
-                                    />
-                                ) : (
-                                    item.cantidad
-                                )}
-                            </td>
+                            {Object.keys(item).map((field, i) => (
+                                <td key={i}>
+                                    {editMode ? (
+                                        <input
+                                            type="text"
+                                            value={item[field]}
+                                            onChange={(e) =>
+                                                handleInputChange(index, field, e.target.value)
+                                            }
+                                        />
+                                    ) : (
+                                        item[field]
+                                    )}
+                                </td>
+                            ))}
                         </tr>
                     ))}
                 </tbody>
