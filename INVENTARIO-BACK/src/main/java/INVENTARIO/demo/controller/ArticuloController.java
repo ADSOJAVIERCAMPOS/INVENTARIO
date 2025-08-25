@@ -25,24 +25,38 @@ public class ArticuloController {
     @Autowired
     private ArticuloRepository articuloRepository;
 
+    // Obtener todos los artículos
     @GetMapping
     public ResponseEntity<List<Articulo>> getAllArticulos() {
         return new ResponseEntity<>(articuloRepository.findAll(), HttpStatus.OK);
     }
 
+    // Obtener un artículo por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Articulo> getArticuloById(@PathVariable Long id) {
-        Optional<Articulo> articulo = articuloRepository.findById(id);
-        return articulo.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<?> getArticuloById(@PathVariable String id) {
+        if ("new".equals(id)) {
+            // Lógica para manejar el caso especial "new"
+            return ResponseEntity.ok("Creando un nuevo artículo...");
+        }
+
+        try {
+            Long articuloId = Long.parseLong(id);
+            Optional<Articulo> articulo = articuloRepository.findById(articuloId);
+            return articulo.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
+                    .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("El ID proporcionado no es válido.");
+        }
     }
 
+    // Crear un nuevo artículo
     @PostMapping
     public ResponseEntity<Articulo> createArticulo(@RequestBody Articulo articulo) {
         Articulo newArticulo = articuloRepository.save(articulo);
         return new ResponseEntity<>(newArticulo, HttpStatus.CREATED);
     }
 
+    // Actualizar un artículo existente
     @PutMapping("/{id}")
     public ResponseEntity<Articulo> updateArticulo(@PathVariable Long id, @RequestBody Articulo articuloDetails) {
         Optional<Articulo> optionalArticulo = articuloRepository.findById(id);
@@ -63,6 +77,7 @@ public class ArticuloController {
         }
     }
 
+    // Eliminar un artículo por ID
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteArticulo(@PathVariable Long id) {
         try {
@@ -71,5 +86,15 @@ public class ArticuloController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // Buscar un artículo por placa
+    @GetMapping("/buscar/{placa}")
+    public ResponseEntity<?> getArticuloByPlaca(@PathVariable String placa) {
+        List<Articulo> articulos = articuloRepository.findByPlaca(placa);
+        if (articulos.isEmpty()) {
+            return new ResponseEntity<>("No se encontró ningún artículo con la placa proporcionada.", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(articulos, HttpStatus.OK);
     }
 }

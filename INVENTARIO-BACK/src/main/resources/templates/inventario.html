@@ -70,6 +70,38 @@
             color: #666;
             line-height: 1.6;
         }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            padding: 0.75rem;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+        }
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .table tbody + tbody {
+            border-top: 2px solid #dee2e6;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0,0,0,.05);
+        }
+        .table-bordered {
+            border: 1px solid #dee2e6;
+        }
+        .table-bordered th, .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
     </style>
 </head>
 <body>
@@ -87,6 +119,41 @@
                 <a href="/api/articulos" class="btn">📋 Ver Todos los Artículos</a>
                 <a href="/api/articulos/new" class="btn btn-success">➕ Agregar Nuevo Artículo</a>
                 <a href="/hello" class="btn">🏠 Página Principal</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Inventario Actual</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Regional</th>
+                            <th>Centro</th>
+                            <th>Módulo</th>
+                            <th>Placa</th>
+                            <th>Valor</th>
+                            <th>Ambiente</th>
+                            <th>Stock Físico</th>
+                            <th>Descripción</th>
+                            <th>Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Aquí se insertarán los datos dinámicamente -->
+                        <tr th:each="item : ${inventarioItems}">
+                            <td th:text="${item.regional}"></td>
+                            <td th:text="${item.centro}"></td>
+                            <td th:text="${item.modulo}"></td>
+                            <td th:text="${item.placa}"></td>
+                            <td th:text="${item.valor}"></td>
+                            <td th:text="${item.ambiente}"></td>
+                            <td th:text="${item.stockFisico}"></td>
+                            <td th:text="${item.descripcion}"></td>
+                            <td th:text="${item.observacion}"></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         

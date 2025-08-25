@@ -1,0 +1,9 @@
+@RestController
+@RequestMapping("/api/inventario")
+public class InventarioController {
+
+    @GetMapping
+    public ResponseEntity<String> obtenerInventario() {
+        return ResponseEntity.ok("Endpoint funcionando correctamente.");
+    }
+}

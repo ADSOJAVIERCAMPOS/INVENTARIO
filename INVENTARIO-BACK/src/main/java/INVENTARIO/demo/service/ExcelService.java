@@ -1,35 +1,40 @@
 package INVENTARIO.demo.service;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+
 @Service
 public class ExcelService {
 
     private List<InventarioItem> inventarioItems = new ArrayList<>();
-    private final String rutaArchivo = "/Inventario Fisico ADSO.xlsx";
+    private final String rutaArchivo = "InventarioFisicoADSO.xlsx";
 
     @PostConstruct
     public void cargarInventarioDesdeExcel() {
-        try (InputStream inputStream = getClass().getResourceAsStream(rutaArchivo);
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(rutaArchivo);
              Workbook workbook = new XSSFWorkbook(inputStream)) {
 
             if (inputStream == null) {
-                throw new RuntimeException("El archivo Excel no se encuentra en el directorio de recursos.");
+                throw new RuntimeException("El archivo Excel '" + rutaArchivo + "' no se encuentra en el directorio de recursos.");
             }
 
             Sheet sheet = workbook.getSheetAt(0);
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) { // Empieza desde la segunda fila
                 Row row = sheet.getRow(i);
-                if (row != null) {
+                if (row != null && row.getCell(0) != null && row.getCell(1) != null && row.getCell(2) != null) {
                     InventarioItem item = new InventarioItem();
                     item.setNumeroPlaca(getCellValue(row.getCell(0))); // Primera celda: número de placa
                     item.setDescripcion(getCellValue(row.getCell(1))); // Segunda celda: descripción
@@ -70,7 +75,7 @@ public class ExcelService {
             }
 
             // Guardar archivo
-            try (FileOutputStream fileOutputStream = new FileOutputStream("src/main/resources/Inventario Fisico ADSO.xlsx")) {
+            try (FileOutputStream fileOutputStream = new FileOutputStream("src/main/resources/" + rutaArchivo)) {
                 workbook.write(fileOutputStream);
             }
         } catch (Exception e) {

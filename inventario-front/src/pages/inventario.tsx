@@ -1,27 +1,27 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import EstadisticasInventario from '../components/EstadisticasInventario';
 
 interface InventarioItem {
-  id?: number;
+  regional: string;
+  centro: string;
+  modulo: string;
+  placa: string;
+  valor: number;
+  ambiente: string;
+  stockFisico: number;
   descripcion: string;
-  categoria: string;
-  marca: string;
-  modelo: string;
-  numeroSerie: string;
-  cantidadFisica: number;
-  cantidadSistema: number;
-  diferencia: number;
-  observaciones: string;
-  fechaInventario: string;
+  observacion: string;
 }
 
 export default function Inventario() {
   const [inventarioData, setInventarioData] = useState<InventarioItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [searchPlaca, setSearchPlaca] = useState('');
+  const [editItem, setEditItem] = useState<InventarioItem | null>(null);
 
   // Configuración del dropzone para archivos Excel
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -35,26 +35,22 @@ export default function Inventario() {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
-          
-          // Mapear los datos del Excel al formato esperado
-          const formattedData: InventarioItem[] = jsonData.map((row, index) => ({
-            descripcion: row['Descripcion'] || row['descripcion'] || '',
-            categoria: row['Categoria'] || row['categoria'] || '',
-            marca: row['Marca'] || row['marca'] || '',
-            modelo: row['Modelo'] || row['modelo'] || '',
-            numeroSerie: row['Numero Serie'] || row['numeroSerie'] || `SERIE-${index + 1}`,
-            cantidadFisica: Number(row['Cantidad Fisica'] || row['cantidadFisica'] || 0),
-            cantidadSistema: Number(row['Cantidad Sistema'] || row['cantidadSistema'] || 0),
-            diferencia: Number(row['Diferencia'] || row['diferencia'] || 0),
-            observaciones: row['Observaciones'] || row['observaciones'] || '',
-            fechaInventario: new Date().toISOString().split('T')[0]
+          const formattedData: InventarioItem[] = jsonData.map((row) => ({
+            regional: row['Regional'] || '',
+            centro: row['Centro'] || '',
+            modulo: row['Modulo'] || '',
+            placa: row['Placa'] || '',
+            valor: Number(row['Valor'] || 0),
+            ambiente: row['Ambiente'] || '',
+            stockFisico: Number(row['Stock fisico'] || 0),
+            descripcion: row['Descripción'] || '',
+            observacion: row['Observación'] || '',
           }));
-
           setInventarioData(formattedData);
           setMessage(`✅ Archivo Excel cargado exitosamente. ${formattedData.length} elementos encontrados.`);
         } catch (error) {
-          setMessage('❌ Error al procesar el archivo Excel');
-          console.error('Error:', error);
+          setMessage('❌ Error al leer el archivo Excel');
+          console.error(error);
         }
       };
       reader.readAsArrayBuffer(file);
@@ -70,6 +66,29 @@ export default function Inventario() {
     multiple: false
   });
 
+  // Cargar por defecto el archivo Excel desde /public al montar el componente
+  useEffect(() => {
+    const fetchExcel = async () => {
+      try {
+        const response = await fetch('/InventarioFisicoADSO.xlsx');
+        const arrayBuffer = await response.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as any[];
+        // Solo eliminar filas cuyo valor en 'Regional' comience con 'De acuerdo'
+        const filteredData = jsonData.filter(row => !String(row['Regional'] || '').trim().toLowerCase().startsWith('de acuerdo'));
+        setInventarioData(filteredData);
+        setMessage(`✅ Archivo Excel cargado automáticamente. ${filteredData.length} elementos encontrados.`);
+      } catch (error) {
+        setMessage('❌ Error al cargar el archivo Excel por defecto');
+        console.error(error);
+      }
+    };
+    fetchExcel();
+  }, []);
+
   // Función para obtener datos del backend
   const obtenerInventario = async () => {
     setLoading(true);
@@ -81,7 +100,7 @@ export default function Inventario() {
       setMessage(`✅ Datos cargados desde el servidor. ${response.data.length} elementos encontrados.`);
     } catch (error: any) {
       console.error('Error completo:', error);
-      
+
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
       } else if (error.response) {
@@ -114,7 +133,7 @@ export default function Inventario() {
       setMessage('✅ Datos enviados exitosamente al servidor');
     } catch (error: any) {
       console.error('Error completo:', error);
-      
+
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
       } else if (error.response) {
@@ -129,6 +148,19 @@ export default function Inventario() {
     }
   };
 
+  // Función para guardar cambios en el backend
+  const guardarCambios = async () => {
+    try {
+      await axios.post('http://localhost:8080/api/inventario/update', inventarioData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      setMessage('✅ Cambios guardados exitosamente.');
+    } catch (error) {
+      setMessage('❌ Error al guardar los cambios.');
+      console.error(error);
+    }
+  };
+
   // Función para exportar a Excel
   const exportarExcel = () => {
     if (inventarioData.length === 0) {
@@ -140,11 +172,11 @@ export default function Inventario() {
       const worksheet = XLSX.utils.json_to_sheet(inventarioData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
-      
+
       // Generar nombre de archivo con fecha
       const fecha = new Date().toISOString().split('T')[0];
       const nombreArchivo = `inventario-${fecha}.xlsx`;
-      
+
       XLSX.writeFile(workbook, nombreArchivo);
       setMessage(`✅ Archivo Excel exportado: ${nombreArchivo}`);
     } catch (error) {
@@ -182,6 +214,41 @@ export default function Inventario() {
     }
   };
 
+  // Función para buscar un elemento por placa
+  const buscarPorPlaca = () => {
+    const item = inventarioData.find((i) => {
+      const placaNormalizada = i.placa?.toString().trim().toLowerCase();
+      const placaBuscada = searchPlaca.trim().toLowerCase();
+      return placaNormalizada === placaBuscada;
+    });
+
+    if (item) {
+      setEditItem(item);
+      setMessage(`✅ Elemento encontrado: ${item.descripcion}`);
+    } else {
+      setMessage('❌ No se encontró ningún elemento con esa placa.');
+    }
+  };
+
+  // Función para manejar cambios en el formulario de edición
+  const handleEditChange = (field: keyof InventarioItem, value: any) => {
+    if (editItem) {
+      setEditItem({ ...editItem, [field]: value });
+    }
+  };
+
+  // Función para guardar los cambios del elemento editado
+  const guardarEdicion = () => {
+    if (editItem) {
+      const updatedData = inventarioData.map((item) =>
+        item.placa === editItem.placa ? editItem : item
+      );
+      setInventarioData(updatedData);
+      setEditItem(null);
+      setMessage('✅ Cambios guardados localmente.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
@@ -201,25 +268,72 @@ export default function Inventario() {
           </div>
         )}
 
-        {/* Estado del Backend */}
+        {/* Campo de búsqueda */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">🔌 Estado del Backend</h2>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>URL del Backend:</strong> http://localhost:8080
-            </p>
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>Endpoints:</strong>
-            </p>
-            <ul className="text-sm text-gray-600 ml-4 space-y-1">
-              <li>• GET /api/inventario - Obtener inventario</li>
-              <li>• POST /api/inventario/batch - Enviar inventario</li>
-            </ul>
-            <div className="mt-3">
-              <span className="text-sm font-medium">Usa el botón "Verificar Conexión" para probar la conectividad</span>
-            </div>
+          <h2 className="text-xl font-semibold mb-4">🔍 Buscar por Placa</h2>
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              value={searchPlaca}
+              onChange={(e) => setSearchPlaca(e.target.value)}
+              placeholder="Ingrese el número de placa"
+              title="Buscar por número de placa"
+              className="border rounded-lg px-4 py-2 w-full"
+            />
+            <button
+              onClick={buscarPorPlaca}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              Buscar
+            </button>
           </div>
         </div>
+
+        {/* Formulario de edición */}
+        {editItem && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">✏️ Editar Elemento</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Descripción</label>
+                <input
+                  type="text"
+                  value={editItem.descripcion}
+                  onChange={(e) => handleEditChange('descripcion', e.target.value)}
+                  placeholder="Ingrese la descripción"
+                  title="Editar descripción"
+                  className="border rounded-lg px-4 py-2 w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Observación</label>
+                <input
+                  type="text"
+                  value={editItem.observacion}
+                  onChange={(e) => handleEditChange('observacion', e.target.value)}
+                  placeholder="Ingrese la observación"
+                  title="Editar observación"
+                  className="border rounded-lg px-4 py-2 w-full"
+                />
+              </div>
+              {/* Puedes agregar más campos editables aquí si lo deseas */}
+            </div>
+            <div className="mt-4 flex gap-4">
+              <button
+                onClick={guardarEdicion}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+              >
+                Guardar Cambios
+              </button>
+              <button
+                onClick={() => setEditItem(null)}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Área de carga de archivos */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -279,6 +393,15 @@ export default function Inventario() {
             </button>
 
             <button
+              onClick={guardarCambios}
+              disabled={loading || inventarioData.length === 0}
+              className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <span>💾</span>
+              Guardar Cambios
+            </button>
+
+            <button
               onClick={exportarExcel}
               disabled={inventarioData.length === 0}
               className="bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -298,85 +421,66 @@ export default function Inventario() {
           </div>
         </div>
 
-        {/* Estadísticas */}
-        {inventarioData.length > 0 && (
-          <EstadisticasInventario datos={inventarioData} />
-        )}
-
         {/* Tabla de datos */}
         {inventarioData.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold">
-                📋 Datos del Inventario ({inventarioData.length} elementos)
-              </h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Descripción
+          <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 text-xs md:text-sm lg:text-base">
+              <thead className="bg-gray-100">
+                <tr>
+                  {Object.keys(inventarioData[0]).map((col) => (
+                    <th
+                      key={col}
+                      className={
+                        col === 'Regional'
+                          ? 'px-1 py-2 whitespace-nowrap text-center' // reducir padding
+                          : 'px-2 md:px-4 py-2 whitespace-nowrap'
+                      }
+                      style={col === 'Regional' ? { maxWidth: 40, width: 40, minWidth: 20 } : {}}
+                    >
+                      {col}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Categoría
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Marca
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Modelo
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cantidad Física
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cantidad Sistema
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Diferencia
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {inventarioData.slice(0, 10).map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.descripcion}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.categoria}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.marca}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.modelo}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.cantidadFisica}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.cantidadSistema}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                        item.diferencia > 0 ? 'text-green-600' : 
-                        item.diferencia < 0 ? 'text-red-600' : 'text-gray-900'
-                      }`}>
-                        {item.diferencia}
-                      </td>
-                    </tr>
                   ))}
-                </tbody>
-              </table>
-              {inventarioData.length > 10 && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-sm text-gray-500">
-                    Mostrando los primeros 10 elementos de {inventarioData.length} total.
-                  </p>
-                </div>
-              )}
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                {inventarioData.map((item, idx) => (
+                  <tr key={idx} className="border-b hover:bg-gray-50">
+                    {Object.keys(item).map((col) => {
+                      if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
+                        return (
+                          <td
+                            key={col}
+                            className={col === 'Regional' ? 'px-1 py-2 text-center' : 'px-2 md:px-4 py-2'}
+                            style={col === 'Regional' ? { maxWidth: 40, width: 40, minWidth: 20 } : {}}
+                          >
+                            <input
+                              type="text"
+                              value={item[col]}
+                              onChange={e => {
+                                const newData = [...inventarioData];
+                                newData[idx][col] = e.target.value;
+                                setInventarioData(newData);
+                              }}
+                              className="w-full border rounded px-2 py-1"
+                            />
+                          </td>
+                        );
+                      } else {
+                        return (
+                          <td
+                            key={col}
+                            className={col === 'Regional' ? 'px-1 py-2 text-center' : 'px-2 md:px-4 py-2'}
+                            style={col === 'Regional' ? { maxWidth: 40, width: 40, minWidth: 20 } : {}}
+                          >
+                            {item[col]}
+                          </td>
+                        );
+                      }
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

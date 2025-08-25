@@ -2,6 +2,8 @@ package INVENTARIO.demo.controller;
 
 import INVENTARIO.demo.service.ExcelService;
 import INVENTARIO.demo.service.ExcelService.InventarioItem;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -23,7 +25,7 @@ public class InventarioController {
     @Autowired
     private ExcelService excelService;
 
-    private final String rutaArchivo = "src/main/resources/Inventario Fisico ADSO.xlsx";
+    private final String rutaArchivo = "src/main/resources/InventarioFisicoADSO.xlsx";
 
     // Endpoint para listar los datos del archivo Excel almacenado en el servidor
     @GetMapping
@@ -50,10 +52,14 @@ public class InventarioController {
                 Row row = sheet.getRow(i);
                 if (row != null) {
                     InventarioItem item = new InventarioItem();
-                    item.setNumeroPlaca(row.getCell(0).getStringCellValue()); // Primera celda: número de placa
-                    item.setDescripcion(row.getCell(1).getStringCellValue()); // Segunda celda: descripción
-                    item.setCantidad((int) row.getCell(2).getNumericCellValue()); // Tercera celda: cantidad
-                    inventarioItems.add(item);
+                    item.setNumeroPlaca(getCellValue(row.getCell(0))); // Primera celda: número de placa
+                    item.setDescripcion(getCellValue(row.getCell(1))); // Segunda celda: descripción
+                    item.setCantidad((int) getNumericCellValue(row.getCell(2))); // Tercera celda: cantidad
+
+                    // Validar que los datos no estén vacíos
+                    if (!item.getNumeroPlaca().isEmpty() || !item.getDescripcion().isEmpty() || item.getCantidad() > 0) {
+                        inventarioItems.add(item);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -61,5 +67,15 @@ public class InventarioController {
         }
 
         return ResponseEntity.ok(inventarioItems);
+    }
+
+    // Método para obtener el valor de una celda como texto
+    private String getCellValue(Cell cell) {
+        return cell != null && cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : "";
+    }
+
+    // Método para obtener el valor numérico de una celda
+    private double getNumericCellValue(Cell cell) {
+        return cell != null && cell.getCellType() == CellType.NUMERIC ? cell.getNumericCellValue() : 0;
     }
 }
