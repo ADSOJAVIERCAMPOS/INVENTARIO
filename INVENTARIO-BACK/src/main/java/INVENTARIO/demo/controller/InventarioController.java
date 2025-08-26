@@ -69,6 +69,16 @@ public class InventarioController {
         return ResponseEntity.ok(inventarioItems);
     }
 
+    // Buscar un elemento por número de placa
+    @GetMapping("/buscar/{placa}")
+    public ResponseEntity<?> buscarPorPlaca(@PathVariable String placa) {
+        InventarioItem item = excelService.buscarPorPlaca(placa);
+        if (item == null) {
+            return ResponseEntity.status(404).body("No se encontró ningún elemento con esa placa.");
+        }
+        return ResponseEntity.ok(item);
+    }
+
     // Método para obtener el valor de una celda como texto
     private String getCellValue(Cell cell) {
         return cell != null && cell.getCellType() == CellType.STRING ? cell.getStringCellValue() : "";

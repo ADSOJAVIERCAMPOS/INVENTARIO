@@ -77,8 +77,11 @@ export default function Inventario() {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as any[];
-        // Solo eliminar filas cuyo valor en 'Regional' comience con 'De acuerdo'
-        const filteredData = jsonData.filter(row => !String(row['Regional'] || '').trim().toLowerCase().startsWith('de acuerdo'));
+        // Eliminar filas que contengan 'De acuerdo' en cualquier columna (fragmentado o no)
+        const filteredData = jsonData.filter(row => {
+          const rowString = Object.values(row).map(val => String(val)).join(' ').replace(/\s+/g, ' ').toLowerCase();
+          return !rowString.startsWith('registros:');
+        });
         setInventarioData(filteredData);
         setMessage(`✅ Archivo Excel cargado automáticamente. ${filteredData.length} elementos encontrados.`);
       } catch (error) {
@@ -366,33 +369,6 @@ export default function Inventario() {
           <h2 className="text-xl font-semibold mb-4">⚡ Acciones</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <button
-              onClick={verificarConexion}
-              disabled={loading}
-              className="bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <span>🔌</span>
-              {loading ? 'Verificando...' : 'Verificar Conexión'}
-            </button>
-
-            <button
-              onClick={obtenerInventario}
-              disabled={loading}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <span>📥</span>
-              {loading ? 'Cargando...' : 'Obtener del Servidor'}
-            </button>
-
-            <button
-              onClick={enviarInventario}
-              disabled={loading || inventarioData.length === 0}
-              className="bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <span>📤</span>
-              {loading ? 'Enviando...' : 'Enviar al Servidor'}
-            </button>
-
-            <button
               onClick={guardarCambios}
               disabled={loading || inventarioData.length === 0}
               className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -410,77 +386,64 @@ export default function Inventario() {
               Exportar Excel
             </button>
 
-            <button
-              onClick={limpiarDatos}
-              disabled={inventarioData.length === 0}
-              className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <span>🗑️</span>
-              Limpiar Datos
-            </button>
           </div>
         </div>
 
         {/* Tabla de datos */}
         {inventarioData.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-xs md:text-sm lg:text-base">
-              <thead className="bg-gray-100">
-                <tr>
-                  {Object.keys(inventarioData[0]).map((col) => (
-                    <th
-                      key={col}
-                      className={
-                        col === 'Regional'
-                          ? 'px-1 py-2 whitespace-nowrap text-center' // reducir padding
-                          : 'px-2 md:px-4 py-2 whitespace-nowrap'
-                      }
-                      style={col === 'Regional' ? { maxWidth: 40, width: 40, minWidth: 20 } : {}}
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {inventarioData.map((item, idx) => (
-                  <tr key={idx} className="border-b hover:bg-gray-50">
-                    {Object.keys(item).map((col) => {
-                      if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
-                        return (
-                          <td
-                            key={col}
-                            className={col === 'Regional' ? 'px-1 py-2 text-center' : 'px-2 md:px-4 py-2'}
-                            style={col === 'Regional' ? { maxWidth: 40, width: 40, minWidth: 20 } : {}}
-                          >
-                            <input
-                              type="text"
-                              value={item[col]}
-                              onChange={e => {
-                                const newData = [...inventarioData];
-                                newData[idx][col] = e.target.value;
-                                setInventarioData(newData);
-                              }}
-                              className="w-full border rounded px-2 py-1"
-                            />
-                          </td>
-                        );
-                      } else {
-                        return (
-                          <td
-                            key={col}
-                            className={col === 'Regional' ? 'px-1 py-2 text-center' : 'px-2 md:px-4 py-2'}
-                            style={col === 'Regional' ? { maxWidth: 40, width: 40, minWidth: 20 } : {}}
-                          >
-                            {item[col]}
-                          </td>
-                        );
-                      }
-                    })}
+          <div className="bg-white rounded-lg shadow-md overflow-x-auto w-full">
+            <div className="w-full min-w-[900px]">
+              <table className="w-full table-auto divide-y divide-gray-200 text-xs md:text-sm lg:text-base">
+                <thead className="bg-gray-100">
+                  <tr>
+                    {Object.keys(inventarioData[0]).map((col) => (
+                      <th
+                        key={col}
+                        className="px-4 py-2 whitespace-nowrap text-center"
+                      >
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {inventarioData.map((item, idx) => (
+                    <tr key={idx} className="border-b hover:bg-gray-50">
+                      {Object.keys(item).map((col) => {
+                        if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
+                          return (
+                            <td
+                              key={col}
+                              className="px-4 py-2"
+                            >
+                              <input
+                                type="text"
+                                value={item[col]}
+                                onChange={e => {
+                                  const newData = [...inventarioData];
+                                  newData[idx][col] = e.target.value;
+                                  setInventarioData(newData);
+                                }}
+                                className="w-full border rounded px-2 py-1"
+                              />
+                            </td>
+                          );
+                        } else {
+                          return (
+                            <td
+                              key={col}
+                              className="px-4 py-2"
+                            >
+                              {item[col]}
+                            </td>
+                          );
+                        }
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

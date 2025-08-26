@@ -34,9 +34,13 @@ public class ExcelService {
 
             for (int i = 1; i <= sheet.getLastRowNum(); i++) { // Empieza desde la segunda fila
                 Row row = sheet.getRow(i);
-                if (row != null && row.getCell(0) != null && row.getCell(1) != null && row.getCell(2) != null) {
+                if (row != null && row.getCell(0) != null) {
+                    String valorCelda = getCellValue(row.getCell(0));
+                    if (valorCelda.trim().equalsIgnoreCase("__VACÍO") || valorCelda.trim().startsWith("__EMPTY")) {
+                        continue; // Ignora la fila de encabezado vacía
+                    }
                     InventarioItem item = new InventarioItem();
-                    item.setNumeroPlaca(getCellValue(row.getCell(0))); // Primera celda: número de placa
+                    item.setNumeroPlaca(valorCelda); // Primera celda: número de placa
                     item.setDescripcion(getCellValue(row.getCell(1))); // Segunda celda: descripción
                     item.setCantidad((int) getNumericCellValue(row.getCell(2))); // Tercera celda: cantidad
                     inventarioItems.add(item);
@@ -89,6 +93,13 @@ public class ExcelService {
 
     private double getNumericCellValue(Cell cell) {
         return cell != null && cell.getCellType() == CellType.NUMERIC ? cell.getNumericCellValue() : 0;
+    }
+
+    public InventarioItem buscarPorPlaca(String placa) {
+        return inventarioItems.stream()
+                .filter(item -> item.getNumeroPlaca() != null && item.getNumeroPlaca().equalsIgnoreCase(placa))
+                .findFirst()
+                .orElse(null);
     }
 
     public static class InventarioItem {

@@ -128,9 +128,9 @@
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th>Regional</th>
-                            <th>Centro</th>
-                            <th>Módulo</th>
+                            <th style="width: 60px; text-align: center;">Regional</th>
+                            <th style="width: 80px; text-align: center;">Centro</th>
+                            <th style="width: 80px; text-align: center;">Módulo</th>
                             <th>Placa</th>
                             <th>Valor</th>
                             <th>Ambiente</th>
@@ -142,9 +142,9 @@
                     <tbody>
                         <!-- Aquí se insertarán los datos dinámicamente -->
                         <tr th:each="item : ${inventarioItems}">
-                            <td th:text="${item.regional}"></td>
-                            <td th:text="${item.centro}"></td>
-                            <td th:text="${item.modulo}"></td>
+                            <td style="width: 60px; text-align: center;" th:text="${item.regional}"></td>
+                            <td style="width: 80px; text-align: center;" th:text="${item.centro}"></td>
+                            <td style="width: 80px; text-align: center;" th:text="${item.modulo}"></td>
                             <td th:text="${item.placa}"></td>
                             <td th:text="${item.valor}"></td>
                             <td th:text="${item.ambiente}"></td>
