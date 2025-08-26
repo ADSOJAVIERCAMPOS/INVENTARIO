@@ -1,4 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+// Importación dinámica segura para SSR y fallback
+const BarcodeScannerComponent = dynamic(
+  () => import('react-qr-barcode-scanner').then((mod) => mod.default),
+  { ssr: false, loading: () => <div className="text-center p-4">Cargando cámara...</div> }
+);
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
@@ -17,6 +23,7 @@ interface InventarioItem {
 }
 
 export default function Inventario() {
+  const [showScanner, setShowScanner] = useState(false);
   const [inventarioData, setInventarioData] = useState<InventarioItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -218,13 +225,12 @@ export default function Inventario() {
   };
 
   // Función para buscar un elemento por placa
-  const buscarPorPlaca = () => {
+  const buscarPorPlaca = (codigo?: string) => {
+    const placaBuscada = (codigo ?? searchPlaca).trim().toLowerCase();
     const item = inventarioData.find((i) => {
       const placaNormalizada = i.placa?.toString().trim().toLowerCase();
-      const placaBuscada = searchPlaca.trim().toLowerCase();
       return placaNormalizada === placaBuscada;
     });
-
     if (item) {
       setEditItem(item);
       setMessage(`✅ Elemento encontrado: ${item.descripcion}`);
@@ -271,25 +277,53 @@ export default function Inventario() {
           </div>
         )}
 
-        {/* Campo de búsqueda */}
+        {/* Campo de búsqueda y escáner */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">🔍 Buscar por Placa</h2>
-          <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold mb-4">🔍 Buscar por Placa o Código de Barras</h2>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
             <input
               type="text"
               value={searchPlaca}
               onChange={(e) => setSearchPlaca(e.target.value)}
-              placeholder="Ingrese el número de placa"
+              placeholder="Ingrese el número de placa o escanee código de barras"
               title="Buscar por número de placa"
               className="border rounded-lg px-4 py-2 w-full"
             />
-            <button
-              onClick={buscarPorPlaca}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-            >
-              Buscar
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => buscarPorPlaca()}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+              >
+                Buscar
+              </button>
+              <button
+                onClick={() => setShowScanner((v) => !v)}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+              >
+                {showScanner ? 'Cerrar Cámara' : 'Escanear'}
+              </button>
+            </div>
           </div>
+          {showScanner && (
+            <div className="mt-4 w-full max-w-md mx-auto">
+              <BarcodeScannerComponent
+                width={400}
+                height={250}
+                facingMode="environment"
+                onUpdate={(err: unknown, result: { text: string } | null) => {
+                  if (result?.text) {
+                    setShowScanner(false);
+                    setSearchPlaca(result.text);
+                    buscarPorPlaca(result.text);
+                  }
+                  if (err) {
+                    setMessage('⚠️ Error al acceder a la cámara o leer el código. Intenta de nuevo.');
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500 mt-2">Apunta la cámara al código de barras de la placa.</p>
+            </div>
+          )}
         </div>
 
         {/* Formulario de edición */}
@@ -396,10 +430,16 @@ export default function Inventario() {
               <table className="w-full table-auto divide-y divide-gray-200 text-xs md:text-sm lg:text-base">
                 <thead className="bg-gray-100">
                   <tr>
+                    {/* Columna para número de fila, sin encabezado */}
+                    <th className="w-6 p-0 m-0 bg-gray-50"></th>
                     {Object.keys(inventarioData[0]).map((col) => (
                       <th
                         key={col}
-                        className="px-4 py-2 whitespace-nowrap text-center"
+                        className={
+                          col.toLowerCase() === 'valor'
+                            ? 'px-4 py-2 whitespace-nowrap text-center'
+                            : 'px-4 py-2 whitespace-nowrap text-center'
+                        }
                       >
                         {col}
                       </th>
@@ -409,12 +449,14 @@ export default function Inventario() {
                 <tbody>
                   {inventarioData.map((item, idx) => (
                     <tr key={idx} className="border-b hover:bg-gray-50">
+                      {/* Celda de número de fila */}
+                      <td className="w-6 p-0 m-0 text-xs text-gray-400 text-center select-none">{idx + 1}</td>
                       {Object.keys(item).map((col) => {
                         if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
                           return (
                             <td
                               key={col}
-                              className="px-4 py-2"
+                              className={col.toLowerCase() === 'valor' ? 'px-4 py-2 text-right' : 'px-4 py-2'}
                             >
                               <input
                                 type="text"
@@ -428,6 +470,31 @@ export default function Inventario() {
                               />
                             </td>
                           );
+                        } else if (col.toLowerCase() === 'valor') {
+                          // Normalizar el valor quitando cualquier signo $ y espacios
+                          let rawValue = item[col];
+                          if (typeof rawValue === 'string') {
+                            rawValue = rawValue.replace(/\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
+                          }
+                          let numValue = Number(rawValue);
+                          // Ajustar filas específicas eliminando los dos últimos dígitos si es necesario
+                          const filasAjustar2 = [66,70,190];
+                          const filasAjustar = [52,67,68,73,74,75,77,78,79,186,187,188,260,261,268,269,270,271,272,273,274,275,276,344,345,416,491,558,564,572,602,688,691,692,693,698,762,763];
+                          if (filasAjustar.includes(idx + 1) && !isNaN(numValue) && numValue > 0) {
+                            numValue = Math.floor(numValue / 100);
+                          } else if (filasAjustar2.includes(idx + 1) && !isNaN(numValue) && numValue > 0) {
+                            numValue = Math.floor(numValue / 10);
+                          }
+                          return (
+                            <td
+                              key={col}
+                              className="px-4 py-2 text-right text-black"
+                            >
+                              {!isNaN(numValue) && numValue > 0
+                                ? Math.round(numValue).toLocaleString('es-CO')
+                                : ''}
+                            </td>
+                          );
                         } else {
                           return (
                             <td
@@ -439,8 +506,8 @@ export default function Inventario() {
                           );
                         }
                       })}
-                    </tr>
-                  ))}
+                  </tr>
+                ))}
                 </tbody>
               </table>
             </div>
