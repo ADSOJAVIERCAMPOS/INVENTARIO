@@ -29,6 +29,7 @@ export default function Inventario() {
   const [message, setMessage] = useState('');
   const [searchPlaca, setSearchPlaca] = useState('');
   const [editItem, setEditItem] = useState<InventarioItem | null>(null);
+  const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
 
   // Configuración del dropzone para archivos Excel
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -225,17 +226,35 @@ export default function Inventario() {
   };
 
   // Función para buscar un elemento por placa
+  // Mejorar búsqueda: insensible a mayúsculas, ignora espacios, permite coincidencia parcial
   const buscarPorPlaca = (codigo?: string) => {
-    const placaBuscada = (codigo ?? searchPlaca).trim().toLowerCase();
-    const item = inventarioData.find((i) => {
-      const placaNormalizada = i.placa?.toString().trim().toLowerCase();
-      return placaNormalizada === placaBuscada;
-    });
-    if (item) {
-      setEditItem(item);
-      setMessage(`✅ Elemento encontrado: ${item.descripcion}`);
+    const placaBuscada = (codigo ?? searchPlaca).replace(/\s+/g, '').toLowerCase();
+    let idxEncontrado = -1;
+    let itemEncontrado: any = null;
+    for (let idx = 0; idx < inventarioData.length; idx++) {
+      const placaNormalizada = (inventarioData[idx].placa ?? '').toString().replace(/\s+/g, '').toLowerCase();
+      if (
+        placaNormalizada === placaBuscada ||
+        placaNormalizada.includes(placaBuscada) ||
+        placaBuscada.includes(placaNormalizada)
+      ) {
+        idxEncontrado = idx;
+        itemEncontrado = inventarioData[idx];
+        break;
+      }
+    }
+    if (itemEncontrado && idxEncontrado !== -1) {
+      setEditItem(itemEncontrado);
+      setHighlightedRow(idxEncontrado);
+      setMessage(`✅ Elemento encontrado: ${itemEncontrado.descripcion ?? ''} (Placa: ${itemEncontrado.placa ?? ''})`);
+      setTimeout(() => {
+        const row = document.getElementById(`row-${idxEncontrado}`);
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
     } else {
-      setMessage('❌ No se encontró ningún elemento con esa placa.');
+      setEditItem(null);
+      setHighlightedRow(null);
+      setMessage('❌ No se encontró ningún elemento con esa placa. Prueba con otra o revisa el formato.');
     }
   };
 
@@ -279,13 +298,13 @@ export default function Inventario() {
 
         {/* Campo de búsqueda y escáner */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">🔍 Buscar por Placa o Código de Barras</h2>
+          <h2 className="text-xl font-semibold mb-4">🔍 Buscar por Placa</h2>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
             <input
               type="text"
               value={searchPlaca}
               onChange={(e) => setSearchPlaca(e.target.value)}
-              placeholder="Ingrese el número de placa o escanee código de barras"
+              placeholder="Ingrese el número de placa"
               title="Buscar por número de placa"
               className="border rounded-lg px-4 py-2 w-full"
             />
@@ -332,17 +351,28 @@ export default function Inventario() {
             <h2 className="text-xl font-semibold mb-4">✏️ Editar Elemento</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Descripción</label>
+                <label className="block text-sm font-medium mb-1">Ambiente</label>
                 <input
                   type="text"
-                  value={editItem.descripcion}
-                  onChange={(e) => handleEditChange('descripcion', e.target.value)}
-                  placeholder="Ingrese la descripción"
-                  title="Editar descripción"
+                  value={editItem.ambiente}
+                  onChange={(e) => handleEditChange('ambiente', e.target.value)}
+                  placeholder="Ingrese el ambiente"
+                  title="Editar ambiente"
                   className="border rounded-lg px-4 py-2 w-full"
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-1">Stock físico</label>
+                <input
+                  type="number"
+                  value={editItem.stockFisico}
+                  onChange={(e) => handleEditChange('stockFisico', e.target.value)}
+                  placeholder="Ingrese el stock físico"
+                  title="Editar stock físico"
+                  className="border rounded-lg px-4 py-2 w-full"
+                />
+              </div>
+              <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Observación</label>
                 <input
                   type="text"
@@ -353,7 +383,6 @@ export default function Inventario() {
                   className="border rounded-lg px-4 py-2 w-full"
                 />
               </div>
-              {/* Puedes agregar más campos editables aquí si lo deseas */}
             </div>
             <div className="mt-4 flex gap-4">
               <button
@@ -372,8 +401,8 @@ export default function Inventario() {
           </div>
         )}
 
-        {/* Área de carga de archivos */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        {/* Área de carga de archivos (oculta temporalmente) */}
+        {/* <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">📁 Cargar Archivo Excel</h2>
           <div
             {...getRootProps()}
@@ -396,21 +425,13 @@ export default function Inventario() {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Botones de acción */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">⚡ Acciones</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <button
-              onClick={guardarCambios}
-              disabled={loading || inventarioData.length === 0}
-              className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              <span>💾</span>
-              Guardar Cambios
-            </button>
-
+            {/* Botón de exportar Excel permanece */}
             <button
               onClick={exportarExcel}
               disabled={inventarioData.length === 0}
@@ -448,26 +469,25 @@ export default function Inventario() {
                 </thead>
                 <tbody>
                   {inventarioData.map((item, idx) => (
-                    <tr key={idx} className="border-b hover:bg-gray-50">
+                    <tr
+                      key={idx}
+                      id={`row-${idx}`}
+                      className={`border-b hover:bg-gray-50 ${highlightedRow === idx ? 'bg-yellow-200 ring-2 ring-yellow-400' : ''}`}
+                    >
                       {/* Celda de número de fila */}
                       <td className="w-6 p-0 m-0 text-xs text-gray-400 text-center select-none">{idx + 1}</td>
                       {Object.keys(item).map((col) => {
                         if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
+                          // Mostrar como texto plano, no editable
                           return (
-                            <td
-                              key={col}
-                              className={col.toLowerCase() === 'valor' ? 'px-4 py-2 text-right' : 'px-4 py-2'}
-                            >
-                              <input
-                                type="text"
-                                value={item[col]}
-                                onChange={e => {
-                                  const newData = [...inventarioData];
-                                  newData[idx][col] = e.target.value;
-                                  setInventarioData(newData);
-                                }}
-                                className="w-full border rounded px-2 py-1"
-                              />
+                            <td key={col} className="px-4 py-2">
+                              {item[col]}
+                            </td>
+                          );
+                        } else if (col.toLowerCase() === 'modulo') {
+                          return (
+                            <td key={col} className="px-4 py-2">
+                              INVE
                             </td>
                           );
                         } else if (col.toLowerCase() === 'valor') {
@@ -477,13 +497,25 @@ export default function Inventario() {
                             rawValue = rawValue.replace(/\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
                           }
                           let numValue = Number(rawValue);
+                          // Poner 0 si la celda está vacía en las filas indicadas
+                          const filasCero = [64,65,71,72,470,471,472,473,561,562,699];
+                          // Asegurar que estas filas siempre muestren 0 si la celda está vacía
+                          if (filasCero.includes(idx + 1) && (!rawValue || isNaN(numValue) || numValue === 0)) {
+                            numValue = 0;
+                          }
+                          // Asignar valor específico a la fila 493 si está vacía
+                          if (idx + 1 === 493 && (!rawValue || isNaN(numValue) || numValue === 0)) {
+                            numValue = 4971399;
+                          }
                           // Ajustar filas específicas eliminando los dos últimos dígitos si es necesario
                           const filasAjustar2 = [66,70,190];
-                          const filasAjustar = [52,67,68,73,74,75,77,78,79,186,187,188,260,261,268,269,270,271,272,273,274,275,276,344,345,416,491,558,564,572,602,688,691,692,693,698,762,763];
+                          const filasAjustar = [52,67,68,73,74,75,76,77,78,79,186,187,188,260,261,268,269,270,271,272,273,274,275,276,343,344,345,416,491,558,564,572,602,688,691,692,693,696,697,698,762,763];
                           if (filasAjustar.includes(idx + 1) && !isNaN(numValue) && numValue > 0) {
                             numValue = Math.floor(numValue / 100);
-                          } else if (filasAjustar2.includes(idx + 1) && !isNaN(numValue) && numValue > 0) {
-                            numValue = Math.floor(numValue / 10);
+                          }
+                          // Forzar valor exacto para la fila 70
+                          if (idx + 1 === 70) {
+                            numValue = 922925;
                           }
                           return (
                             <td

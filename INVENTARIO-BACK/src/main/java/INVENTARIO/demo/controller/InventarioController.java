@@ -1,7 +1,10 @@
 package INVENTARIO.demo.controller;
 
-import INVENTARIO.demo.service.ExcelService;
-import INVENTARIO.demo.service.ExcelService.InventarioItem;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -10,13 +13,18 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import INVENTARIO.demo.service.ExcelService;
+import INVENTARIO.demo.service.ExcelService.ComparacionResultado;
+import INVENTARIO.demo.service.ExcelService.InventarioItem;
 
 @RestController
 @RequestMapping("/api/inventario")
@@ -77,6 +85,13 @@ public class InventarioController {
             return ResponseEntity.status(404).body("No se encontró ningún elemento con esa placa.");
         }
         return ResponseEntity.ok(item);
+    }
+
+    // Comparar con nuevo Excel y obtener diferencias y datos completos
+    @PostMapping("/comparar-excel-completo")
+    public ResponseEntity<ComparacionResultado> compararExcelCompleto(@RequestParam("file") MultipartFile file) {
+        ComparacionResultado resultado = excelService.compararConNuevoExcelConDatos(file);
+        return ResponseEntity.ok(resultado);
     }
 
     // Método para obtener el valor de una celda como texto
