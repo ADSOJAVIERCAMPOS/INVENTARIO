@@ -525,9 +525,12 @@ export default function Inventario() {
                             </td>
                           );
                         } else if (col.toLowerCase() === 'modulo') {
+                          // Unificar: si el valor es 'INVESTIGACIÓN' (o variantes), mostrar 'INVE'
+                          const valorModulo = String(item[col as keyof typeof item]).trim().toLowerCase();
+                          const mostrar = valorModulo === 'investigación' || valorModulo === 'investigacion' ? 'INVE' : item[col as keyof typeof item];
                           return (
                             <td key={col} className="px-4 py-2">
-                              INVE
+                              {mostrar}
                             </td>
                           );
                         } else if (col.toLowerCase() === 'valor') {
