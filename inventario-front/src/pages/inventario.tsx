@@ -1,10 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-// Importación dinámica segura para SSR y fallback
-const BarcodeScannerComponent = dynamic(
-  () => import('react-qr-barcode-scanner').then((mod) => mod.default),
-  { ssr: false, loading: () => <div className="text-center p-4">Cargando cámara...</div> }
-);
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
@@ -23,7 +17,6 @@ interface InventarioItem {
 }
 
 export default function Inventario() {
-  const [showScanner, setShowScanner] = useState(false);
   const [inventarioData, setInventarioData] = useState<InventarioItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -326,7 +319,7 @@ export default function Inventario() {
           </div>
         )}
 
-        {/* Campo de búsqueda y escáner */}
+        {/* Campo de búsqueda */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">🔍 Buscar por Placa</h2>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
@@ -345,34 +338,8 @@ export default function Inventario() {
               >
                 Buscar
               </button>
-              <button
-                onClick={() => setShowScanner((v) => !v)}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
-              >
-                {showScanner ? 'Cerrar Cámara' : 'Escanear'}
-              </button>
             </div>
           </div>
-          {showScanner && (
-            <div className="mt-4 w-full max-w-md mx-auto">
-              <BarcodeScannerComponent
-                width={400}
-                height={250}
-                facingMode="environment"
-                onUpdate={(err: unknown, result: { text: string } | null) => {
-                  if (result?.text) {
-                    setShowScanner(false);
-                    setSearchPlaca(result.text);
-                    buscarPorPlaca(result.text);
-                  }
-                  if (err) {
-                    setMessage('⚠️ Error al acceder a la cámara o leer el código. Intenta de nuevo.');
-                  }
-                }}
-              />
-              <p className="text-xs text-gray-500 mt-2">Apunta la cámara al código de barras de la placa.</p>
-            </div>
-          )}
         </div>
 
         {/* Formulario de edición */}
