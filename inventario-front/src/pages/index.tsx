@@ -27,12 +27,12 @@ export default function Home() {
               className="object-contain"
             />
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-800 mb-1">
-                INVENTARIO COORDINACIÓN ADSO
+              <h1 className="text-4xl font-bold text-green-700 text-center">
+                COORDINACIÓN ADSO
               </h1>
-              <p className="text-lg text-green-600 font-semibold">
+              <h2 className="text-green-700 font-semibold text-center text-3xl mb-2">
                 CENTRO DE SERVICIOS FINANCIEROS
-              </p>
+              </h2>
             </div>
           </div>
         </div>
@@ -40,16 +40,6 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center justify-center">
-            <Image
-              src="/gestion.png"
-              alt="Gestión de Inventario"
-              width={80}
-              height={80}
-              className="object-contain inline-block mr-2"
-            />
-            Gestión de Inventario
-          </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           </p>
         </div>
@@ -101,14 +91,12 @@ export default function Home() {
           {/* Información institucional */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200 max-w-3xl mt-8">
             <div className="text-center">
-              <h3 className="font-bold text-lg text-green-800 mb-2">
-                Análisis y Desarrollo de Software 
-              </h3>
-              <p className="text-green-700">
-              </p>
-              <p className="text-sm text-green-600 mt-2">
-                Bogotá
-               </p>
+                <h3 className="font-bold text-2xl text-green-800 mb-4 uppercase">
+                  ANÁLISIS Y DESARROLLO DE SOFTWARE
+                </h3>
+                <p className="text-green-700 text-2xl uppercase">
+                  BOGOTÁ
+                </p>
             </div>
           </div>
         </div>
@@ -118,10 +106,10 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-4 mb-2">
             <span>🚀</span>
-            <span> JAVIER CAMPOS </span>
+            <span className="text-2xl font-bold uppercase"> JAVIER CAMPOS </span>
           </div>
-          <p className="text-sm text-gray-400">
-            © 2025
+          <p className="text-lg text-gray-400 font-bold">
+            2025
           </p>
         </div>
       </footer>

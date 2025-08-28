@@ -486,18 +486,20 @@ export default function Inventario() {
                   <tr>
                     {/* Columna para número de fila, sin encabezado */}
                     <th className="w-6 p-0 m-0 bg-gray-50"></th>
-                    {Object.keys(inventarioData[0]).map((col) => (
-                      <th
-                        key={col}
-                        className={
-                          col.toLowerCase() === 'valor'
-                            ? 'px-4 py-2 whitespace-nowrap text-center'
-                            : 'px-4 py-2 whitespace-nowrap text-center'
-                        }
-                      >
-                        {col}
-                      </th>
-                    ))}
+                    {Object.keys(inventarioData[0])
+                      .filter((col) => col.toLowerCase() !== 'modulo')
+                      .map((col) => (
+                        <th
+                          key={col}
+                          className={
+                            col.toLowerCase() === 'valor'
+                              ? 'px-4 py-2 whitespace-nowrap text-center'
+                              : 'px-4 py-2 whitespace-nowrap text-center'
+                          }
+                        >
+                          {col}
+                        </th>
+                      ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -509,79 +511,79 @@ export default function Inventario() {
                     >
                       {/* Celda de número de fila */}
                       <td className="w-6 p-0 m-0 text-xs text-gray-400 text-center select-none">{idx + 1}</td>
-                      {Object.keys(item).map((col) => {
-                        if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
-                          if (col === "Stock fisico") {
-                            const valor = String(item[col as keyof typeof item]).trim().toLowerCase();
-                            // Solo mostrar 'No encontrado' si es exactamente '0' o 'no encontrado', todo lo demás es 'Encontrado'
-                            const mostrar = (valor === '0' || valor === 'no encontrado') ? 'No encontrado' : 'Encontrado';
+                      {Object.keys(item)
+                        .filter((col) => col.toLowerCase() !== 'modulo')
+                        .map((col) => {
+                          if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
+                            if (col === "Stock fisico") {
+                              const valor = String(item[col as keyof typeof item]).trim().toLowerCase();
+                              // Solo mostrar 'No encontrado' si es exactamente '0' o 'no encontrado', todo lo demás es 'Encontrado'
+                              const mostrar = (valor === '0' || valor === 'no encontrado') ? 'No encontrado' : 'Encontrado';
+                              return (
+                                <td key={col} className="px-4 py-2">{mostrar}</td>
+                              );
+                            }
                             return (
-                              <td key={col} className="px-4 py-2">{mostrar}</td>
+                              <td key={col} className="px-4 py-2">
+                                {item[col as keyof typeof item] as string | number}
+                              </td>
+                            );
+                          } else if (col.toLowerCase() === 'modulo') {
+                            // Forzar que siempre muestre 'INVE' en la tabla
+                            return (
+                              <td key={col} className="px-4 py-2">
+                                INVE
+                              </td>
+                            );
+                          } else if (col.toLowerCase() === 'valor') {
+                            // Normalizar el valor quitando cualquier signo $ y espacios
+                            let rawValue = item[col as keyof typeof item] as string | number;
+                            if (typeof rawValue === 'string') {
+                              rawValue = rawValue.replace(/\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
+                            }
+                            let numValue = Number(rawValue);
+                            // Poner 0 si la celda está vacía en las filas indicadas
+                            const filasCero = [64,65,71,72,470,471,472,473,561,562,699];
+                            if (filasCero.includes(idx + 1) && (!rawValue || isNaN(numValue) || numValue === 0)) {
+                              numValue = 0;
+                            }
+                            // Asignar valor específico a la fila 493 si está vacía
+                            if (idx + 1 === 493 && (!rawValue || isNaN(numValue) || numValue === 0)) {
+                              numValue = 4971399;
+                            }
+                            // Ajustar filas específicas eliminando los dos últimos dígitos si es necesario
+                            const filasAjustar2 = [66,70,190];
+                            const filasAjustar = [52,67,68,73,74,75,76,77,78,79,186,187,188,260,261,268,269,270,271,272,273,274,275,276,343,344,345,416,491,558,564,572,602,688,691,692,693,696,697,698,762,763];
+                            if (filasAjustar.includes(idx + 1) && !isNaN(numValue) && numValue > 0) {
+                              numValue = Math.floor(numValue / 100);
+                            }
+                            // Forzar valor exacto para la fila 70
+                            if (idx + 1 === 70) {
+                              numValue = 922925;
+                            }
+                            return (
+                              <td
+                                key={col}
+                                className="px-4 py-2 text-right text-black"
+                              >
+                                {!isNaN(numValue) && numValue > 0
+                                  ? Math.round(numValue).toLocaleString('es-CO')
+                                  : ''}
+                              </td>
+                            );
+                          } else {
+                            return (
+                              <td
+                                key={col}
+                                className="px-4 py-2"
+                              >
+                                {item[col as keyof typeof item] as string | number}
+                              </td>
                             );
                           }
-                          return (
-                            <td key={col} className="px-4 py-2">
-                              {item[col as keyof typeof item] as string | number}
-                            </td>
-                          );
-                        } else if (col.toLowerCase() === 'modulo') {
-                          // Unificar: si el valor es 'INVESTIGACIÓN' (o variantes), mostrar 'INVE'
-                          const valorModulo = String(item[col as keyof typeof item]).trim().toLowerCase();
-                          const mostrar = valorModulo === 'investigación' || valorModulo === 'investigacion' ? 'INVE' : item[col as keyof typeof item];
-                          return (
-                            <td key={col} className="px-4 py-2">
-                              {mostrar}
-                            </td>
-                          );
-                        } else if (col.toLowerCase() === 'valor') {
-                          // Normalizar el valor quitando cualquier signo $ y espacios
-                          let rawValue = item[col as keyof typeof item] as string | number;
-                          if (typeof rawValue === 'string') {
-                            rawValue = rawValue.replace(/\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
-                          }
-                          let numValue = Number(rawValue);
-                          // Poner 0 si la celda está vacía en las filas indicadas
-                          const filasCero = [64,65,71,72,470,471,472,473,561,562,699];
-                          if (filasCero.includes(idx + 1) && (!rawValue || isNaN(numValue) || numValue === 0)) {
-                            numValue = 0;
-                          }
-                          // Asignar valor específico a la fila 493 si está vacía
-                          if (idx + 1 === 493 && (!rawValue || isNaN(numValue) || numValue === 0)) {
-                            numValue = 4971399;
-                          }
-                          // Ajustar filas específicas eliminando los dos últimos dígitos si es necesario
-                          const filasAjustar2 = [66,70,190];
-                          const filasAjustar = [52,67,68,73,74,75,76,77,78,79,186,187,188,260,261,268,269,270,271,272,273,274,275,276,343,344,345,416,491,558,564,572,602,688,691,692,693,696,697,698,762,763];
-                          if (filasAjustar.includes(idx + 1) && !isNaN(numValue) && numValue > 0) {
-                            numValue = Math.floor(numValue / 100);
-                          }
-                          // Forzar valor exacto para la fila 70
-                          if (idx + 1 === 70) {
-                            numValue = 922925;
-                          }
-                          return (
-                            <td
-                              key={col}
-                              className="px-4 py-2 text-right text-black"
-                            >
-                              {!isNaN(numValue) && numValue > 0
-                                ? Math.round(numValue).toLocaleString('es-CO')
-                                : ''}
-                            </td>
-                          );
-                        } else {
-                          return (
-                            <td
-                              key={col}
-                              className="px-4 py-2"
-                            >
-                              {item[col as keyof typeof item] as string | number}
-                            </td>
-                          );
-                        }
-                      })}
-                  </tr>
-                ))}
+                        })}
+                </tr>
+              ))}
                 </tbody>
               </table>
             </div>
