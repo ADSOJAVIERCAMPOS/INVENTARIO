@@ -104,11 +104,15 @@ public class ExcelService {
     }
 
     public InventarioItem buscarPorPlaca(String placa) {
-        if (placa == null) return null;
-        String placaBuscada = placa.replaceAll("\\D", ""); // Solo números
+        if (placa == null || placa.trim().isEmpty()) return null;
+        String placaBuscada = placa.replaceAll("\\D", "");
         return inventarioItems.stream()
-                .filter(item -> item.getNumeroPlaca() != null &&
-                        item.getNumeroPlaca().replaceAll("\\D", "").equals(placaBuscada))
+                .filter(item -> {
+                    String itemPlaca = item.getNumeroPlaca();
+                    if (itemPlaca == null) return false;
+                    String itemPlacaNum = itemPlaca.replaceAll("\\D", "");
+                    return !itemPlacaNum.isEmpty() && itemPlacaNum.equals(placaBuscada);
+                })
                 .findFirst()
                 .orElse(null);
     }
@@ -201,6 +205,7 @@ public class ExcelService {
         private String numeroPlaca;
         private String descripcion;
         private int cantidad;
+        private String stockFisico = "";
 
         // Getters y setters
         public String getNumeroPlaca() {
@@ -225,6 +230,14 @@ public class ExcelService {
 
         public void setCantidad(int cantidad) {
             this.cantidad = cantidad;
+        }
+
+        public String getStockFisico() {
+            return stockFisico;
+        }
+
+        public void setStockFisico(String stockFisico) {
+            this.stockFisico = stockFisico;
         }
     }
 

@@ -43,17 +43,22 @@ export default function Inventario() {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
-          const formattedData: InventarioItem[] = jsonData.map((row) => ({
-            regional: row['Regional'] || '',
-            centro: row['Centro'] || '',
-            modulo: row['Modulo'] || '',
-            placa: row['Placa'] || '',
-            valor: Number(row['Valor'] || 0),
-            ambiente: row['Ambiente'] || '',
-            stockFisico: Number(row['Stock fisico'] || 0),
-            descripcion: row['Descripción'] || '',
-            observacion: row['Observación'] || '',
-          }));
+          const formattedData: InventarioItem[] = jsonData.map((row) => {
+            let stock = row['Stock fisico'];
+            let stockStr = typeof stock === 'string' ? stock.trim().toLowerCase() : String(stock);
+            let stockFisicoClean = (stockStr === '0' || stockStr === 'no encontrado') ? 'No encontrado' : 'Encontrado';
+            return {
+              regional: row['Regional'] || '',
+              centro: row['Centro'] || '',
+              modulo: row['Modulo'] || '',
+              placa: row['Placa'] !== undefined && row['Placa'] !== null ? String(row['Placa']).trim() : '',
+              valor: Number(row['Valor'] || 0),
+              ambiente: row['Ambiente'] || '',
+              stockFisico: stockFisicoClean,
+              descripcion: row['Descripción'] || '',
+              observacion: row['Observación'] || '',
+            };
+          });
           setInventarioData(formattedData);
           setMessage(`✅ Archivo Excel cargado exitosamente. ${formattedData.length} elementos encontrados.`);
         } catch (error) {
@@ -90,8 +95,25 @@ export default function Inventario() {
           const rowString = Object.values(row).map(val => String(val)).join(' ').replace(/\s+/g, ' ').toLowerCase();
           return !rowString.startsWith('registros:');
         });
-        setInventarioData(filteredData);
-        setMessage(`✅ Archivo Excel cargado automáticamente. ${filteredData.length} elementos encontrados.`);
+        // Forzar placa a string en la carga automática también
+        const normalizedData: InventarioItem[] = filteredData.map((row: any) => {
+          let stock = row['Stock fisico'];
+          let stockStr = typeof stock === 'string' ? stock.trim().toLowerCase() : String(stock);
+          let stockFisicoClean = (stockStr === '0' || stockStr === 'no encontrado') ? 'No encontrado' : 'Encontrado';
+          return {
+            regional: row['Regional'] || '',
+            centro: row['Centro'] || '',
+            modulo: row['Modulo'] || '',
+            placa: row['Placa'] !== undefined && row['Placa'] !== null ? String(row['Placa']).trim() : '',
+            valor: Number(row['Valor'] || 0),
+            ambiente: row['Ambiente'] || '',
+            stockFisico: stockFisicoClean,
+            descripcion: row['Descripción'] || '',
+            observacion: row['Observación'] || '',
+          };
+        });
+        setInventarioData(normalizedData);
+        setMessage(`✅ Archivo Excel cargado automáticamente. ${normalizedData.length} elementos encontrados.`);
       } catch (error) {
         setMessage('❌ Error al cargar el archivo Excel por defecto');
         console.error(error);
@@ -228,16 +250,16 @@ export default function Inventario() {
   // Función para buscar un elemento por placa
   // Mejorar búsqueda: insensible a mayúsculas, ignora espacios, permite coincidencia parcial
   const buscarPorPlaca = (codigo?: string) => {
-    const placaBuscada = (codigo ?? searchPlaca).replace(/\s+/g, '').toLowerCase();
+    // Búsqueda exacta: compara como string, sin eliminar ceros a la izquierda
+    const normalizarPlaca = (p: string | number | undefined) => {
+      return (p ?? '').toString().replace(/\s+/g, '').toLowerCase();
+    };
+    const placaBuscada = normalizarPlaca(codigo ?? searchPlaca);
     let idxEncontrado = -1;
     let itemEncontrado: any = null;
     for (let idx = 0; idx < inventarioData.length; idx++) {
-      const placaNormalizada = (inventarioData[idx].placa ?? '').toString().replace(/\s+/g, '').toLowerCase();
-      if (
-        placaNormalizada === placaBuscada ||
-        placaNormalizada.includes(placaBuscada) ||
-        placaBuscada.includes(placaNormalizada)
-      ) {
+      let placaNormalizada = normalizarPlaca(inventarioData[idx].placa);
+      if (placaNormalizada === placaBuscada) {
         idxEncontrado = idx;
         itemEncontrado = inventarioData[idx];
         break;
@@ -268,8 +290,16 @@ export default function Inventario() {
   // Función para guardar los cambios del elemento editado
   const guardarEdicion = () => {
     if (editItem) {
+      // Limpiar stockFisico: solo permitir 'Encontrado' o 'No encontrado'
+      const cleanEditItem = {
+        ...editItem,
+        stockFisico:
+          String(editItem.stockFisico).trim().toLowerCase() === 'no encontrado' || String(editItem.stockFisico).trim() === '0'
+            ? 'No encontrado'
+            : 'Encontrado',
+      };
       const updatedData = inventarioData.map((item) =>
-        item.placa === editItem.placa ? editItem : item
+        item.placa === editItem.placa ? cleanEditItem : item
       );
       setInventarioData(updatedData);
       setEditItem(null);
@@ -363,14 +393,17 @@ export default function Inventario() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Stock físico</label>
-                <input
-                  type="number"
-                  value={editItem.stockFisico}
-                  onChange={(e) => handleEditChange('stockFisico', e.target.value)}
-                  placeholder="Ingrese el stock físico"
-                  title="Editar stock físico"
+                <select
+                  value={(() => {
+                    const v = String(editItem.stockFisico).trim().toLowerCase();
+                    return v === '0' || v === 'no encontrado' ? 'No encontrado' : 'Encontrado';
+                  })()}
+                  onChange={e => handleEditChange('stockFisico', e.target.value)}
                   className="border rounded-lg px-4 py-2 w-full"
-                />
+                >
+                  <option value="Encontrado">Encontrado</option>
+                  <option value="No encontrado">No encontrado</option>
+                </select>
               </div>
               <div className="col-span-2">
                 <label className="block text-sm font-medium mb-1">Observación</label>
@@ -472,16 +505,23 @@ export default function Inventario() {
                     <tr
                       key={idx}
                       id={`row-${idx}`}
-                      className={`border-b hover:bg-gray-50 ${highlightedRow === idx ? 'bg-yellow-200 ring-2 ring-yellow-400' : ''}`}
+                      className={`border-b hover:bg-gray-50 ${highlightedRow === idx ? 'bg-green-200 ring-2 ring-green-400' : ''}`}
                     >
                       {/* Celda de número de fila */}
                       <td className="w-6 p-0 m-0 text-xs text-gray-400 text-center select-none">{idx + 1}</td>
                       {Object.keys(item).map((col) => {
                         if (["Ambiente", "Stock fisico", "Observación"].includes(col)) {
-                          // Mostrar como texto plano, no editable
+                          if (col === "Stock fisico") {
+                            const valor = String(item[col as keyof typeof item]).trim().toLowerCase();
+                            // Solo mostrar 'No encontrado' si es exactamente '0' o 'no encontrado', todo lo demás es 'Encontrado'
+                            const mostrar = (valor === '0' || valor === 'no encontrado') ? 'No encontrado' : 'Encontrado';
+                            return (
+                              <td key={col} className="px-4 py-2">{mostrar}</td>
+                            );
+                          }
                           return (
                             <td key={col} className="px-4 py-2">
-                              {item[col]}
+                              {item[col as keyof typeof item] as string | number}
                             </td>
                           );
                         } else if (col.toLowerCase() === 'modulo') {
@@ -492,14 +532,13 @@ export default function Inventario() {
                           );
                         } else if (col.toLowerCase() === 'valor') {
                           // Normalizar el valor quitando cualquier signo $ y espacios
-                          let rawValue = item[col];
+                          let rawValue = item[col as keyof typeof item] as string | number;
                           if (typeof rawValue === 'string') {
                             rawValue = rawValue.replace(/\$/g, '').replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
                           }
                           let numValue = Number(rawValue);
                           // Poner 0 si la celda está vacía en las filas indicadas
                           const filasCero = [64,65,71,72,470,471,472,473,561,562,699];
-                          // Asegurar que estas filas siempre muestren 0 si la celda está vacía
                           if (filasCero.includes(idx + 1) && (!rawValue || isNaN(numValue) || numValue === 0)) {
                             numValue = 0;
                           }
@@ -533,7 +572,7 @@ export default function Inventario() {
                               key={col}
                               className="px-4 py-2"
                             >
-                              {item[col]}
+                              {item[col as keyof typeof item] as string | number}
                             </td>
                           );
                         }
