@@ -117,15 +117,23 @@ export default function Inventario() {
         typeof error === 'object' &&
         error !== null &&
         'code' in error &&
-        typeof (error as Record<string, unknown>).code === 'string' &&
-        ((error as Record<string, unknown>).code === 'ECONNREFUSED' || ((error as Record<string, unknown>).message && typeof (error as Record<string, unknown>).message === 'string' && (error as Record<string, unknown>).message.includes('Network Error')))
+        typeof (error as { code?: string }).code === 'string' &&
+        (error as { code?: string }).code === 'ECONNREFUSED'
+      ) {
+        setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as { message?: string }).message === 'string' &&
+        (error as { message: string }).message.includes('Network Error')
       ) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
       } else if (
         typeof error === 'object' &&
         error !== null &&
         'response' in error &&
-        (error as Record<string, unknown>).response
+        (error as { response?: { status: number; data?: { message?: string } } }).response
       ) {
         const err = error as { response: { status: number; data?: { message?: string } } };
         setMessage(`❌ Error del servidor: ${err.response.status} - ${err.response.data?.message || 'Error desconocido'}`);
@@ -133,14 +141,14 @@ export default function Inventario() {
         typeof error === 'object' &&
         error !== null &&
         'request' in error &&
-        (error as Record<string, unknown>).request
+        (error as { request?: unknown }).request
       ) {
         setMessage('❌ Sin respuesta del servidor. Verifica la conexión y que el backend esté corriendo.');
       } else if (
         typeof error === 'object' &&
         error !== null &&
         'message' in error &&
-        typeof (error as Record<string, unknown>).message === 'string'
+        typeof (error as { message?: string }).message === 'string'
       ) {
         setMessage(`❌ Error: ${(error as { message: string }).message}`);
       } else {
