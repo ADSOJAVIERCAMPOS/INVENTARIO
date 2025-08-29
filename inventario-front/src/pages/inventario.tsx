@@ -11,7 +11,7 @@ interface InventarioItem {
   placa: string;
   valor: number;
   ambiente: string;
-  stockFisico: number;
+  stockFisico: string;
   descripcion: string;
   observacion: string;
 }
@@ -36,22 +36,17 @@ export default function Inventario() {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
-          const formattedData: InventarioItem[] = jsonData.map((row) => {
-            let stock = row['Stock fisico'];
-            let stockStr = typeof stock === 'string' ? stock.trim().toLowerCase() : String(stock);
-            let stockFisicoClean = (stockStr === '0' || stockStr === 'no encontrado') ? 'No encontrado' : 'Encontrado';
-            return {
-              regional: row['Regional'] || '',
-              centro: row['Centro'] || '',
-              modulo: row['Modulo'] || '',
-              placa: row['Placa'] !== undefined && row['Placa'] !== null ? String(row['Placa']).trim() : '',
-              valor: Number(row['Valor'] || 0),
-              ambiente: row['Ambiente'] || '',
-              stockFisico: stockFisicoClean,
-              descripcion: row['Descripción'] || '',
-              observacion: row['Observación'] || '',
-            };
-          });
+          const formattedData: InventarioItem[] = jsonData.map((row) => ({
+            regional: String(row['Regional']),
+            centro: String(row['Centro']),
+            modulo: String(row['Módulo'] ?? ''),
+            placa: String(row['Placa']),
+            valor: Number(row['Valor']),
+            ambiente: String(row['Ambiente']),
+            stockFisico: String(row['Stock fisico']),
+            descripcion: String(row['Descripción']),
+            observacion: String(row['Observación']),
+          }));
           setInventarioData(formattedData);
           setMessage(`✅ Archivo Excel cargado exitosamente. ${formattedData.length} elementos encontrados.`);
         } catch (error) {
@@ -89,22 +84,17 @@ export default function Inventario() {
           return !rowString.startsWith('registros:');
         });
         // Forzar placa a string en la carga automática también
-        const normalizedData: InventarioItem[] = filteredData.map((row: any) => {
-          let stock = row['Stock fisico'];
-          let stockStr = typeof stock === 'string' ? stock.trim().toLowerCase() : String(stock);
-          let stockFisicoClean = (stockStr === '0' || stockStr === 'no encontrado') ? 'No encontrado' : 'Encontrado';
-          return {
-            regional: row['Regional'] || '',
-            centro: row['Centro'] || '',
-            modulo: row['Modulo'] || '',
-            placa: row['Placa'] !== undefined && row['Placa'] !== null ? String(row['Placa']).trim() : '',
-            valor: Number(row['Valor'] || 0),
-            ambiente: row['Ambiente'] || '',
-            stockFisico: stockFisicoClean,
-            descripcion: row['Descripción'] || '',
-            observacion: row['Observación'] || '',
-          };
-        });
+        const normalizedData: InventarioItem[] = filteredData.map((row: any) => ({
+          regional: String(row['Regional']),
+          centro: String(row['Centro']),
+          modulo: String(row['Módulo'] ?? ''),
+          placa: String(row['Placa']),
+          valor: Number(row['Valor']),
+          ambiente: String(row['Ambiente']),
+          stockFisico: String(row['Stock fisico']),
+          descripcion: String(row['Descripción']),
+          observacion: String(row['Observación']),
+        }));
         setInventarioData(normalizedData);
         setMessage(`✅ Archivo Excel cargado automáticamente. ${normalizedData.length} elementos encontrados.`);
       } catch (error) {
@@ -199,9 +189,9 @@ export default function Inventario() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
 
-      // Generar nombre de archivo con fecha
+      // Generar nombre de archivo con fecha y autor
       const fecha = new Date().toISOString().split('T')[0];
-      const nombreArchivo = `inventario-${fecha}.xlsx`;
+  const nombreArchivo = `inventario-${fecha}-JAVIER CAMPOS.xlsx`;
 
       XLSX.writeFile(workbook, nombreArchivo);
       setMessage(`✅ Archivo Excel exportado: ${nombreArchivo}`);
