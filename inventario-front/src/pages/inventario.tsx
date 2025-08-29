@@ -111,8 +111,9 @@ export default function Inventario() {
       });
       setInventarioData(response.data);
       setMessage(`✅ Datos cargados desde el servidor. ${response.data.length} elementos encontrados.`);
-  } catch (error: unknown) {
+    } catch (error: unknown) {
       console.error('Error completo:', error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (
         typeof error === 'object' &&
         error !== null &&
@@ -121,6 +122,7 @@ export default function Inventario() {
         ((error as any).code === 'ECONNREFUSED' || ((error as any).message && (error as any).message.includes('Network Error')))
       ) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (
         typeof error === 'object' &&
         error !== null &&
@@ -128,6 +130,7 @@ export default function Inventario() {
         (error as any).response
       ) {
         setMessage(`❌ Error del servidor: ${(error as any).response.status} - ${(error as any).response.data?.message || 'Error desconocido'}`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (
         typeof error === 'object' &&
         error !== null &&
@@ -135,6 +138,7 @@ export default function Inventario() {
         (error as any).request
       ) {
         setMessage('❌ Sin respuesta del servidor. Verifica la conexión y que el backend esté corriendo.');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (
         typeof error === 'object' &&
         error !== null &&
@@ -150,60 +154,6 @@ export default function Inventario() {
     }
   };
 
-  // Función para enviar datos al backend
-  const enviarInventario = async () => {
-    if (inventarioData.length === 0) {
-      setMessage('❌ No hay datos para enviar');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await axios.post('http://localhost:8080/api/inventario/batch', inventarioData, {
-        timeout: 10000, // 10 segundos de timeout
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      setMessage('✅ Datos enviados exitosamente al servidor');
-  } catch (error: unknown) {
-      console.error('Error completo:', error);
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        typeof (error as any).code === 'string' &&
-        ((error as any).code === 'ECONNREFUSED' || ((error as any).message && (error as any).message.includes('Network Error')))
-      ) {
-        setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
-      } else if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        (error as any).response
-      ) {
-        setMessage(`❌ Error del servidor: ${(error as any).response.status} - ${(error as any).response.data?.message || 'Error desconocido'}`);
-      } else if (
-        typeof error === 'object' &&
-        error !== null &&
-        'request' in error &&
-        (error as any).request
-      ) {
-        setMessage('❌ Sin respuesta del servidor. Verifica la conexión y que el backend esté corriendo.');
-      } else if (
-        typeof error === 'object' &&
-        error !== null &&
-        'message' in error &&
-        typeof (error as any).message === 'string'
-      ) {
-        setMessage(`❌ Error: ${(error as any).message}`);
-      } else {
-        setMessage('❌ Error desconocido.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Función para guardar cambios en el backend
   const guardarCambios = async () => {
