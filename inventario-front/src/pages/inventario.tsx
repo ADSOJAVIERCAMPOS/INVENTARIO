@@ -113,39 +113,36 @@ export default function Inventario() {
       setMessage(`✅ Datos cargados desde el servidor. ${response.data.length} elementos encontrados.`);
     } catch (error: unknown) {
       console.error('Error completo:', error);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (
         typeof error === 'object' &&
         error !== null &&
         'code' in error &&
-        typeof (error as any).code === 'string' &&
-        ((error as any).code === 'ECONNREFUSED' || ((error as any).message && (error as any).message.includes('Network Error')))
+        typeof (error as Record<string, unknown>).code === 'string' &&
+        ((error as Record<string, unknown>).code === 'ECONNREFUSED' || ((error as Record<string, unknown>).message && typeof (error as Record<string, unknown>).message === 'string' && (error as Record<string, unknown>).message.includes('Network Error')))
       ) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (
         typeof error === 'object' &&
         error !== null &&
         'response' in error &&
-        (error as any).response
+        (error as Record<string, unknown>).response
       ) {
-        setMessage(`❌ Error del servidor: ${(error as any).response.status} - ${(error as any).response.data?.message || 'Error desconocido'}`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const err = error as { response: { status: number; data?: { message?: string } } };
+        setMessage(`❌ Error del servidor: ${err.response.status} - ${err.response.data?.message || 'Error desconocido'}`);
       } else if (
         typeof error === 'object' &&
         error !== null &&
         'request' in error &&
-        (error as any).request
+        (error as Record<string, unknown>).request
       ) {
         setMessage('❌ Sin respuesta del servidor. Verifica la conexión y que el backend esté corriendo.');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if (
         typeof error === 'object' &&
         error !== null &&
         'message' in error &&
-        typeof (error as any).message === 'string'
+        typeof (error as Record<string, unknown>).message === 'string'
       ) {
-        setMessage(`❌ Error: ${(error as any).message}`);
+        setMessage(`❌ Error: ${(error as { message: string }).message}`);
       } else {
         setMessage('❌ Error desconocido.');
       }
