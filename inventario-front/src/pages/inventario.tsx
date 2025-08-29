@@ -242,34 +242,7 @@ export default function Inventario() {
     }
   };
 
-  // Función para limpiar datos
-  const limpiarDatos = () => {
-    setInventarioData([]);
-    setMessage('🗑️ Datos limpiados');
-  };
 
-  // Función para verificar conexión con el backend
-  const verificarConexion = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get('http://localhost:8080/actuator/health', {
-        timeout: 5000,
-      });
-      setMessage('✅ Conexión con el backend exitosa');
-    } catch (error) {
-      try {
-        // Intentar endpoint alternativo
-        const response = await axios.get('http://localhost:8080/api/inventario', {
-          timeout: 5000,
-        });
-        setMessage('✅ Backend conectado (endpoint de inventario disponible)');
-      } catch (error2) {
-        setMessage('❌ No se puede conectar al backend. Asegúrate de que esté corriendo en http://localhost:8080');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Función para buscar un elemento por placa
   // Mejorar búsqueda: insensible a mayúsculas, ignora espacios, permite coincidencia parcial
@@ -392,6 +365,7 @@ export default function Inventario() {
               <div>
                 <label className="block text-sm font-medium mb-1">Stock físico</label>
                 <select
+                  aria-label="Seleccionar estado de stock físico"
                   value={(() => {
                     const v = String(editItem.stockFisico).trim().toLowerCase();
                     return v === '0' || v === 'no encontrado' ? 'No encontrado' : 'Encontrado';
