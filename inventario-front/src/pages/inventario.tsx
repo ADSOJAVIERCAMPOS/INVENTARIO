@@ -5,9 +5,8 @@ import axios from 'axios';
 import EstadisticasInventario from '../components/EstadisticasInventario';
 
 interface InventarioItem {
-  regional: string;
-  centro: string;
-  modulo: string;
+  regional: number;
+  centro: number;
   placa: string;
   valor: number;
   ambiente: string;
@@ -35,17 +34,16 @@ export default function Inventario() {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
           const formattedData: InventarioItem[] = jsonData.map((row) => ({
-            regional: String(row['Regional']),
-            centro: String(row['Centro']),
-            modulo: String(row['Módulo'] ?? ''),
-            placa: String(row['Placa']),
-            valor: Number(row['Valor']),
-            ambiente: String(row['Ambiente']),
-            stockFisico: String(row['Stock fisico']),
-            descripcion: String(row['Descripción']),
-            observacion: String(row['Observación']),
+            regional: Number(row['Regional'] ?? 0),
+            centro: Number(row['Centro'] ?? 0),
+            placa: String(row['Placa'] ?? ''),
+            valor: Number(row['Valor'] ?? 0),
+            ambiente: String(row['Ambiente'] ?? ''),
+            stockFisico: String(row['Stock fisico'] ?? ''),
+            descripcion: String(row['Descripción'] ?? ''),
+            observacion: String(row['Observación'] ?? ''),
           }));
           setInventarioData(formattedData);
           setMessage(`✅ Archivo Excel cargado exitosamente. ${formattedData.length} elementos encontrados.`);
@@ -77,23 +75,22 @@ export default function Inventario() {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as any[];
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Record<string, unknown>[];
         // Eliminar filas que contengan 'De acuerdo' en cualquier columna (fragmentado o no)
         const filteredData = jsonData.filter(row => {
           const rowString = Object.values(row).map(val => String(val)).join(' ').replace(/\s+/g, ' ').toLowerCase();
           return !rowString.startsWith('registros:');
         });
         // Forzar placa a string en la carga automática también
-        const normalizedData: InventarioItem[] = filteredData.map((row: any) => ({
-          regional: String(row['Regional']),
-          centro: String(row['Centro']),
-          modulo: String(row['Módulo'] ?? ''),
-          placa: String(row['Placa']),
-          valor: Number(row['Valor']),
-          ambiente: String(row['Ambiente']),
-          stockFisico: String(row['Stock fisico']),
-          descripcion: String(row['Descripción']),
-          observacion: String(row['Observación']),
+        const normalizedData: InventarioItem[] = filteredData.map((row: Record<string, unknown>) => ({
+          regional: Number(row['Regional'] ?? 0),
+          centro: Number(row['Centro'] ?? 0),
+          placa: String(row['Placa'] ?? ''),
+          valor: Number(row['Valor'] ?? 0),
+          ambiente: String(row['Ambiente'] ?? ''),
+          stockFisico: String(row['Stock fisico'] ?? ''),
+          descripcion: String(row['Descripción'] ?? ''),
+          observacion: String(row['Observación'] ?? ''),
         }));
         setInventarioData(normalizedData);
         setMessage(`✅ Archivo Excel cargado automáticamente. ${normalizedData.length} elementos encontrados.`);
@@ -114,17 +111,39 @@ export default function Inventario() {
       });
       setInventarioData(response.data);
       setMessage(`✅ Datos cargados desde el servidor. ${response.data.length} elementos encontrados.`);
-    } catch (error: any) {
+  } catch (error: unknown) {
       console.error('Error completo:', error);
-
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as any).code === 'string' &&
+        ((error as any).code === 'ECONNREFUSED' || ((error as any).message && (error as any).message.includes('Network Error')))
+      ) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
-      } else if (error.response) {
-        setMessage(`❌ Error del servidor: ${error.response.status} - ${error.response.data?.message || 'Error desconocido'}`);
-      } else if (error.request) {
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as any).response
+      ) {
+        setMessage(`❌ Error del servidor: ${(error as any).response.status} - ${(error as any).response.data?.message || 'Error desconocido'}`);
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'request' in error &&
+        (error as any).request
+      ) {
         setMessage('❌ Sin respuesta del servidor. Verifica la conexión y que el backend esté corriendo.');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as any).message === 'string'
+      ) {
+        setMessage(`❌ Error: ${(error as any).message}`);
       } else {
-        setMessage(`❌ Error: ${error.message}`);
+        setMessage('❌ Error desconocido.');
       }
     } finally {
       setLoading(false);
@@ -147,17 +166,39 @@ export default function Inventario() {
         }
       });
       setMessage('✅ Datos enviados exitosamente al servidor');
-    } catch (error: any) {
+  } catch (error: unknown) {
       console.error('Error completo:', error);
-
-      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        typeof (error as any).code === 'string' &&
+        ((error as any).code === 'ECONNREFUSED' || ((error as any).message && (error as any).message.includes('Network Error')))
+      ) {
         setMessage('❌ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://localhost:8080');
-      } else if (error.response) {
-        setMessage(`❌ Error del servidor: ${error.response.status} - ${error.response.data?.message || 'Error desconocido'}`);
-      } else if (error.request) {
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as any).response
+      ) {
+        setMessage(`❌ Error del servidor: ${(error as any).response.status} - ${(error as any).response.data?.message || 'Error desconocido'}`);
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'request' in error &&
+        (error as any).request
+      ) {
         setMessage('❌ Sin respuesta del servidor. Verifica la conexión y que el backend esté corriendo.');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as any).message === 'string'
+      ) {
+        setMessage(`❌ Error: ${(error as any).message}`);
       } else {
-        setMessage(`❌ Error: ${error.message}`);
+        setMessage('❌ Error desconocido.');
       }
     } finally {
       setLoading(false);
@@ -239,9 +280,9 @@ export default function Inventario() {
     };
     const placaBuscada = normalizarPlaca(codigo ?? searchPlaca);
     let idxEncontrado = -1;
-    let itemEncontrado: any = null;
+  let itemEncontrado: InventarioItem | null = null;
     for (let idx = 0; idx < inventarioData.length; idx++) {
-      let placaNormalizada = normalizarPlaca(inventarioData[idx].placa);
+  const placaNormalizada = normalizarPlaca(inventarioData[idx].placa);
       if (placaNormalizada === placaBuscada) {
         idxEncontrado = idx;
         itemEncontrado = inventarioData[idx];
@@ -264,7 +305,7 @@ export default function Inventario() {
   };
 
   // Función para manejar cambios en el formulario de edición
-  const handleEditChange = (field: keyof InventarioItem, value: any) => {
+  const handleEditChange = (field: keyof InventarioItem, value: unknown) => {
     if (editItem) {
       setEditItem({ ...editItem, [field]: value });
     }
