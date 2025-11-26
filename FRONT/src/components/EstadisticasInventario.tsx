@@ -159,9 +159,9 @@ export default function EstadisticasInventario({ datos }: EstadisticasInventario
 
       {/* Totales */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-purple-50 p-4 rounded-lg">
-          <h3 className="font-semibold text-purple-800 mb-2">📦 Cantidad Total Física</h3>
-          <div className="text-2xl font-bold text-purple-600">{estadisticas.valorTotalFisico}</div>
+        <div className="bg-green-50 p-4 rounded-lg">
+          <h3 className="font-semibold text-green-800 mb-2">📦 Cantidad Total Física</h3>
+          <div className="text-2xl font-bold text-green-600">{estadisticas.valorTotalFisico}</div>
         </div>
         <div className="bg-indigo-50 p-4 rounded-lg">
           <h3 className="font-semibold text-indigo-800 mb-2">💻 Cantidad Total Sistema</h3>

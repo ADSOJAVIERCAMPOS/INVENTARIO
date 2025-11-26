@@ -30,8 +30,8 @@ logging.level.org.springframework.web=DEBUG
 # Configuración de correo electrónico
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=inventarioadso2024@gmail.com
-spring.mail.password=CAMBIAR_POR_PASSWORD_APLICACION
+spring.mail.username=jc2583@gmail.com
+spring.mail.password=sbxiioiovdrqtkhj
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 spring.mail.properties.mail.smtp.starttls.required=true

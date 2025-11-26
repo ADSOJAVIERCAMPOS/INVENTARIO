@@ -395,7 +395,7 @@ export default function Inventario() {
             <button
               onClick={exportarExcel}
               disabled={inventarioData.length === 0}
-              className="bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               <span>📊</span>
               Exportar Excel
