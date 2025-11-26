@@ -385,4 +385,40 @@ public class ExcelService {
         diferenciasGeneradas = diferencias;
         return new ComparacionResultado(diferencias, datosArchivo);
     }
+
+    public byte[] generarExcelBytes() {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Inventario Físico ADSO");
+            
+            // Crear encabezados
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Número de Placa");
+            headerRow.createCell(1).setCellValue("Descripción");
+            headerRow.createCell(2).setCellValue("Cantidad");
+            headerRow.createCell(3).setCellValue("Stock Físico");
+
+            // Agregar datos del inventario
+            for (int i = 0; i < inventarioItems.size(); i++) {
+                InventarioItem item = inventarioItems.get(i);
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue(item.getNumeroPlaca());
+                row.createCell(1).setCellValue(item.getDescripcion());
+                row.createCell(2).setCellValue(item.getCantidad());
+                row.createCell(3).setCellValue(item.getStockFisico());
+            }
+
+            // Autoajustar el ancho de las columnas
+            for (int i = 0; i < 4; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Convertir a bytes
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar archivo Excel: " + e.getMessage(), e);
+        }
+    }
 }

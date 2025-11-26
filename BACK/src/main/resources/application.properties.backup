@@ -30,8 +30,8 @@ logging.level.org.springframework.web=DEBUG
 # Configuración de correo electrónico
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=jc2583@gmail.com
-spring.mail.password=sbxi ioio vdrq tkhj
+spring.mail.username=inventarioadso2024@gmail.com
+spring.mail.password=CAMBIAR_POR_PASSWORD_APLICACION
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 spring.mail.properties.mail.smtp.starttls.required=true
@@ -42,6 +42,5 @@ spring.mail.test-connection=false
 
 # Correo de notificaciones
 app.notification.email=jc2583@gmail.com
-app.notification.from-email=jc2583@gmail.com
+app.notification.from-email=inventarioadso2024@gmail.com
 app.notification.enabled=true
-

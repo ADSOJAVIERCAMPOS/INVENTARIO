@@ -1,0 +1,74 @@
+🚀 CONFIGURACIÓN RÁPIDA - SISTEMA DE NOTIFICACIONES
+=================================================
+
+📧 CORREO DE DESTINO CONFIGURADO: jc2583@gmail.com
+✅ TODO EL CÓDIGO YA ESTÁ IMPLEMENTADO
+
+SOLO NECESITAS COMPLETAR LA CONFIGURACIÓN DE CORREO:
+
+🔧 PASOS PARA ACTIVAR EL SISTEMA:
+================================
+
+PASO 1: CONFIGURAR CUENTA DE GMAIL
+----------------------------------
+Opción A (Recomendada): Crear cuenta específica
+- Ve a: https://accounts.google.com/signup
+- Crear: inventarioadso2024@gmail.com (o el nombre que prefieras)
+
+Opción B: Usar cuenta existente
+- Puedes usar cualquier cuenta Gmail que ya tengas
+
+PASO 2: ACTIVAR VERIFICACIÓN EN 2 PASOS
+----------------------------------------
+1. Ve a: https://myaccount.google.com/
+2. Clic en "Seguridad" (panel izquierdo)
+3. Busca "Verificación en 2 pasos"
+4. Sigue las instrucciones (necesitas tu teléfono)
+
+PASO 3: GENERAR CONTRASEÑA DE APLICACIÓN
+----------------------------------------
+1. En la misma página de Seguridad
+2. Ve a "Contraseñas de aplicación" (parte inferior)
+3. Selecciona:
+   - Aplicación: "Correo"
+   - Dispositivo: "Windows Computer"
+4. Clic en "Generar"
+5. COPIA la contraseña de 16 caracteres (ej: abcd efgh ijkl mnop)
+
+PASO 4: APLICAR CONFIGURACIÓN
+-----------------------------
+Edita este archivo: BACK/src/main/resources/application.properties
+
+Busca estas líneas (líneas 33-35):
+spring.mail.username=inventarioadso2024@gmail.com
+spring.mail.password=CAMBIAR_POR_PASSWORD_APLICACION
+
+Cámbialas por:
+spring.mail.username=TU_EMAIL@gmail.com
+spring.mail.password=TU_CONTRASEÑA_DE_16_CARACTERES
+
+⚠️ IMPORTANTE: Usa la contraseña de aplicación de 16 caracteres, 
+   NO tu contraseña normal de Gmail.
+
+PASO 5: PROBAR EL SISTEMA
+-------------------------
+1. Abrir terminal en BACK/
+2. Ejecutar: mvnw spring-boot:run
+3. Abrir navegador: http://localhost:8080/api/test/email
+4. ¡Deberías recibir un correo en jc2583@gmail.com!
+
+🎉 RESULTADO ESPERADO:
+===================
+- ✅ Recibirás correo de prueba en jc2583@gmail.com
+- ✅ El sistema empezará a notificar automáticamente:
+  • Cada acceso a la página
+  • Cada modificación del inventario
+  • Cada descarga de Excel
+
+🆘 SI NECESITAS AYUDA:
+====================
+- Revisa GUIA_CONFIGURACION_COMPLETA.md para más detalles
+- Los errores aparecen en la consola de la aplicación
+- Verifica que uses la contraseña de aplicación de 16 caracteres
+
+¡Una vez configurado, funciona automáticamente! 🚀

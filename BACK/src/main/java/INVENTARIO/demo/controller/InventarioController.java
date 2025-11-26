@@ -23,8 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import INVENTARIO.demo.service.ExcelService;
+import INVENTARIO.demo.service.NotificationService;
 import INVENTARIO.demo.service.ExcelService.ComparacionResultado;
 import INVENTARIO.demo.service.ExcelService.InventarioItem;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/inventario")
@@ -32,6 +34,9 @@ public class InventarioController {
 
     @Autowired
     private ExcelService excelService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     private final String rutaArchivo = "src/main/resources/InventarioFisicoADSO.xlsx";
 
@@ -43,14 +48,20 @@ public class InventarioController {
 
     // Endpoint para guardar los datos en el archivo Excel almacenado en el servidor
     @PostMapping
-    public String guardarInventario(@RequestBody List<InventarioItem> inventarioItems) throws IOException {
+    public String guardarInventario(@RequestBody List<InventarioItem> inventarioItems, HttpServletRequest request) throws IOException {
         excelService.actualizarInventario(inventarioItems);
+        
+        // Notificar modificación
+        String ipAddress = getClientIpAddress(request);
+        notificationService.notificarModificacion(ipAddress, "Actualización de Inventario", 
+            "Se actualizó el inventario con " + inventarioItems.size() + " elementos");
+        
         return "Inventario actualizado correctamente.";
     }
 
     // Endpoint para subir y procesar un archivo Excel desde el frontend
     @PostMapping("/subir-excel")
-    public ResponseEntity<?> procesarExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> procesarExcel(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         List<InventarioItem> inventarioItems = new ArrayList<>();
 
         try (InputStream inputStream = file.getInputStream(); Workbook workbook = new XSSFWorkbook(inputStream)) {
@@ -70,6 +81,11 @@ public class InventarioController {
                     }
                 }
             }
+
+            // Notificar subida de archivo
+            String ipAddress = getClientIpAddress(request);
+            notificationService.notificarSubidaArchivo(ipAddress, file.getOriginalFilename(), inventarioItems.size());
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al procesar el archivo: " + e.getMessage());
         }
@@ -89,8 +105,15 @@ public class InventarioController {
 
     // Comparar con nuevo Excel y obtener diferencias y datos completos
     @PostMapping("/comparar-excel-completo")
-    public ResponseEntity<ComparacionResultado> compararExcelCompleto(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ComparacionResultado> compararExcelCompleto(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         ComparacionResultado resultado = excelService.compararConNuevoExcelConDatos(file);
+        
+        // Notificar comparación de archivo
+        String ipAddress = getClientIpAddress(request);
+        notificationService.notificarModificacion(ipAddress, "Comparación de Excel", 
+            "Se comparó archivo: " + file.getOriginalFilename() + " - Diferencias encontradas: " + 
+            resultado.getDiferencias().size());
+        
         return ResponseEntity.ok(resultado);
     }
 
@@ -102,5 +125,41 @@ public class InventarioController {
     // Método para obtener el valor numérico de una celda
     private double getNumericCellValue(Cell cell) {
         return cell != null && cell.getCellType() == CellType.NUMERIC ? cell.getNumericCellValue() : 0;
+    }
+
+    // Endpoint para descargar el Excel actual
+    @GetMapping("/descargar-excel")
+    public ResponseEntity<?> descargarExcel(HttpServletRequest request) {
+        try {
+            // Notificar descarga
+            String ipAddress = getClientIpAddress(request);
+            notificationService.notificarDescargaExcel(ipAddress, "Descarga de Inventario Completo", "InventarioFisicoADSO.xlsx");
+            
+            // Obtener el archivo Excel desde el servicio
+            byte[] excelBytes = excelService.generarExcelBytes();
+            
+            return ResponseEntity.ok()
+                .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .header("Content-Disposition", "attachment; filename=InventarioFisicoADSO.xlsx")
+                .body(excelBytes);
+                
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al generar el archivo Excel: " + e.getMessage());
+        }
+    }
+
+    // Método para obtener la IP del cliente
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0];
+        }
+        
+        String xRealIP = request.getHeader("X-Real-IP");
+        if (xRealIP != null && !xRealIP.isEmpty()) {
+            return xRealIP;
+        }
+        
+        return request.getRemoteAddr();
     }
 }
