@@ -89,12 +89,6 @@
 			<version>1.3.2</version>
 		</dependency>
 
-		<!-- Spring Boot Mail Starter -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-		</dependency>
-
 		<!-- Apache Commons Lang para utilidades de String y más -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>

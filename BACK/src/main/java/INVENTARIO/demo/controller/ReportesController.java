@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import INVENTARIO.demo.service.ExcelService;
-import INVENTARIO.demo.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -20,17 +19,11 @@ public class ReportesController {
     @Autowired
     private ExcelService excelService;
 
-    @Autowired
-    private NotificationService notificationService;
-
     @GetMapping("/exportar-diferencias")
     public ResponseEntity<Resource> exportarDiferencias(HttpServletRequest request) {
         try {
             Resource resource = excelService.exportarDiferenciasAExcel();
             
-            // Notificar descarga
-            String ipAddress = getClientIpAddress(request);
-            notificationService.notificarDescargaExcel(ipAddress, "Reporte de Diferencias", "DiferenciasInventario.xlsx");
             
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)

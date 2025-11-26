@@ -22,7 +22,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import INVENTARIO.demo.model.Articulo;
 import INVENTARIO.demo.repository.ArticuloRepository;
-import INVENTARIO.demo.service.NotificationService;
 import INVENTARIO.demo.service.PdfExportService;
 
 @RestController
@@ -34,9 +33,6 @@ public class ArticuloController {
     
     @Autowired
     private PdfExportService pdfExportService;
-    
-    @Autowired
-    private NotificationService notificationService;
 
     // Obtener todos los artículos
     @GetMapping
@@ -121,13 +117,6 @@ public class ArticuloController {
         try {
             List<Articulo> resultados = articuloRepository.busquedaInteligente(q);
             
-            // Notificar búsqueda
-            notificationService.notificarAccesoUsuario(
-                request.getRemoteAddr(), 
-                "Búsqueda inteligente: " + q + " (resultados: " + resultados.size() + ")", 
-                "/api/articulos/busqueda"
-            );
-            
             return new ResponseEntity<>(resultados, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -151,12 +140,6 @@ public class ArticuloController {
                 estado != null ? estado : "null",
                 clasificacion != null ? clasificacion : "null",
                 ubicacion != null ? ubicacion : "null"
-            );
-            
-            notificationService.notificarAccesoUsuario(
-                request.getRemoteAddr(), 
-                "Búsqueda avanzada (" + criterios + ") - resultados: " + resultados.size(), 
-                "/api/articulos/busqueda-avanzada"
             );
             
             return new ResponseEntity<>(resultados, HttpStatus.OK);
