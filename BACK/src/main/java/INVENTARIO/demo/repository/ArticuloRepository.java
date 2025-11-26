@@ -15,12 +15,6 @@ public interface ArticuloRepository extends JpaRepository<Articulo, Long> {
     
     List<Articulo> findByPlaca(String placa);
     
-    // Búsqueda por código de barras
-    Optional<Articulo> findByCodigoBarras(String codigoBarras);
-    
-    // Búsqueda por código QR
-    Optional<Articulo> findByQrCode(String qrCode);
-    
     // Búsqueda inteligente por descripción (insensible a mayúsculas)
     @Query("SELECT a FROM Articulo a WHERE LOWER(a.descripcion) LIKE LOWER(CONCAT('%', :descripcion, '%'))")
     List<Articulo> findByDescripcionContainingIgnoreCase(@Param("descripcion") String descripcion);

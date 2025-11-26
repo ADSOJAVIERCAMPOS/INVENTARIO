@@ -38,12 +38,6 @@ public class Articulo {
     
     @Column(name = "ubicacion")
     private String ubicacion;
-    
-    @Column(name = "codigo_barras", unique = true)
-    private String codigoBarras;
-    
-    @Column(name = "qr_code")
-    private String qrCode;
 
     // Constructores
     public Articulo() {}
@@ -60,13 +54,7 @@ public class Articulo {
         this.ubicacion = ubicacion;
     }
     
-    public Articulo(String codigoArticulo, String descripcion, Integer cantidadTeorica, 
-                   String placa, String observaciones, String estado, String clasificacion, 
-                   String ubicacion, String codigoBarras, String qrCode) {
-        this(codigoArticulo, descripcion, cantidadTeorica, placa, observaciones, estado, clasificacion, ubicacion);
-        this.codigoBarras = codigoBarras;
-        this.qrCode = qrCode;
-    }
+
 
     // Getters y Setters
     public Long getId() {
@@ -141,21 +129,7 @@ public class Articulo {
         this.ubicacion = ubicacion;
     }
 
-    public String getCodigoBarras() {
-        return codigoBarras;
-    }
 
-    public void setCodigoBarras(String codigoBarras) {
-        this.codigoBarras = codigoBarras;
-    }
-
-    public String getQrCode() {
-        return qrCode;
-    }
-
-    public void setQrCode(String qrCode) {
-        this.qrCode = qrCode;
-    }
 
     @Override
     public String toString() {
@@ -169,8 +143,6 @@ public class Articulo {
                 ", estado='" + estado + '\'' +
                 ", clasificacion='" + clasificacion + '\'' +
                 ", ubicacion='" + ubicacion + '\'' +
-                ", codigoBarras='" + codigoBarras + '\'' +
-                ", qrCode='" + qrCode + '\'' +
                 '}';
     }
 }

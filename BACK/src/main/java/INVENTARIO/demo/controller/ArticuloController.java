@@ -113,47 +113,7 @@ public class ArticuloController {
 
     // ========== NUEVAS FUNCIONALIDADES ==========
 
-    // 📱 Buscar artículo por código de barras
-    @GetMapping("/codigo-barras/{codigo}")
-    public ResponseEntity<?> getArticuloByCodigoBarras(@PathVariable String codigo, HttpServletRequest request) {
-        try {
-            Optional<Articulo> articulo = articuloRepository.findByCodigoBarras(codigo);
-            if (articulo.isPresent()) {
-                // Notificar acceso por código de barras
-                notificationService.notificarAccesoUsuario(
-                    request.getRemoteAddr(), 
-                    "Búsqueda por código de barras: " + codigo, 
-                    "/api/articulos/codigo-barras/" + codigo
-                );
-                return new ResponseEntity<>(articulo.get(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("No se encontró artículo con código de barras: " + codigo, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al buscar por código de barras", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
-    // 📱 Buscar artículo por código QR
-    @GetMapping("/qr/{qrCode}")
-    public ResponseEntity<?> getArticuloByQr(@PathVariable String qrCode, HttpServletRequest request) {
-        try {
-            Optional<Articulo> articulo = articuloRepository.findByQrCode(qrCode);
-            if (articulo.isPresent()) {
-                // Notificar acceso por QR
-                notificationService.notificarAccesoUsuario(
-                    request.getRemoteAddr(), 
-                    "Búsqueda por código QR: " + qrCode, 
-                    "/api/articulos/qr/" + qrCode
-                );
-                return new ResponseEntity<>(articulo.get(), HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("No se encontró artículo con código QR: " + qrCode, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al buscar por código QR", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     // 🔍 Búsqueda inteligente por descripción
     @GetMapping("/busqueda")
