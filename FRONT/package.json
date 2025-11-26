@@ -3,6 +3,8 @@
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.11.0",
     "exceljs": "^4.4.0",
+    "html5-qrcode": "^2.3.8",
+    "lodash": "^4.17.21",
     "next": "^15.4.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -27,6 +29,7 @@
   "license": "ISC",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/lodash": "^4.17.21",
     "@types/node": "24.1.0",
     "@types/react": "19.1.9",
     "autoprefixer": "^10.4.21",

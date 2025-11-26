@@ -1,0 +1,16 @@
+INSERT INTO articulos (nombre, descripcion, categoria, ubicacion, cantidad_teorica, cantidad_fisica, fecha_actualizacion, estado) VALUES 
+('Laptop ASUS X515EA', 'Laptop para desarrollo con procesador Intel i5', 'Equipos de Cómputo', 'Laboratorio 1', 10, 10, '2024-11-25', 'OK'),
+('Monitor Samsung 24"', 'Monitor LED Full HD para estaciones de trabajo', 'Equipos de Cómputo', 'Laboratorio 1', 15, 14, '2024-11-25', 'FALTA'),
+('Teclado Logitech K380', 'Teclado inalámbrico bluetooth', 'Accesorios', 'Almacén', 25, 27, '2024-11-25', 'SOBRA'),
+('Mouse Óptico HP', 'Mouse óptico USB estándar', 'Accesorios', 'Laboratorio 2', 20, 20, '2024-11-25', 'OK'),
+('Proyector Epson PowerLite', 'Proyector multimedia para aulas', 'Equipos Audiovisuales', 'Aula 101', 3, 2, '2024-11-25', 'FALTA'),
+('Tablero Digital Interactivo', 'Tablero inteligente táctil 65 pulgadas', 'Equipos Audiovisuales', 'Aula 102', 2, 2, '2024-11-25', 'OK'),
+('Silla Ergonómica Oficina', 'Silla giratoria con apoyo lumbar', 'Mobiliario', 'Oficinas', 50, 48, '2024-11-25', 'FALTA'),
+('Mesa de Trabajo Modular', 'Mesa ajustable para laboratorios', 'Mobiliario', 'Laboratorio 3', 12, 15, '2024-11-25', 'SOBRA'),
+('Router Cisco Catalyst', 'Router empresarial para red institucional', 'Equipos de Red', 'Cuarto de Servidores', 5, 5, '2024-11-25', 'OK'),
+('Switch TP-Link 24 puertos', 'Switch administrable Gigabit', 'Equipos de Red', 'Cuarto de Servidores', 8, 0, '2024-11-25', 'NUEVO'),
+('Impresora HP LaserJet', 'Impresora láser monocromática', 'Equipos de Oficina', 'Secretaría', 6, 5, '2024-11-25', 'FALTA'),
+('Escáner Canon CanoScan', 'Escáner de documentos de alta resolución', 'Equipos de Oficina', 'Biblioteca', 3, 4, '2024-11-25', 'SOBRA'),
+('Tablet Samsung Galaxy Tab', 'Tablet Android para presentaciones', 'Dispositivos Móviles', 'Dirección', 8, 8, '2024-11-25', 'OK'),
+('Cámara Web Logitech C920', 'Cámara HD para videoconferencias', 'Equipos Audiovisuales', 'Sala de Juntas', 4, 6, '2024-11-25', 'SOBRA'),
+('Micrófono Inalámbrico Shure', 'Sistema de micrófono para eventos', 'Equipos Audiovisuales', 'Auditorio', 6, 4, '2024-11-25', 'FALTA');

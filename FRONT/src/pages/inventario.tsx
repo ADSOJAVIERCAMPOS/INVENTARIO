@@ -22,6 +22,7 @@ export default function Inventario() {
   const [searchPlaca, setSearchPlaca] = useState('');
   const [editItem, setEditItem] = useState<InventarioItem | null>(null);
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
+  const [exportandoPDF, setExportandoPDF] = useState(false);
 
   // Configuración del dropzone para archivos Excel
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -75,7 +76,7 @@ export default function Inventario() {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-  const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Record<string, unknown>[];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Record<string, unknown>[];
         // Eliminar filas que contengan 'De acuerdo' en cualquier columna (fragmentado o no)
         const filteredData = jsonData.filter(row => {
           const rowString = Object.values(row).map(val => String(val)).join(' ').replace(/\s+/g, ' ').toLowerCase();
@@ -159,7 +160,6 @@ export default function Inventario() {
     }
   };
 
-
   // Función para guardar cambios en el backend
   const guardarCambios = async () => {
     try {
@@ -187,7 +187,7 @@ export default function Inventario() {
 
       // Generar nombre de archivo con fecha y autor
       const fecha = new Date().toISOString().split('T')[0];
-  const nombreArchivo = `inventario-${fecha}-JAVIER CAMPOS.xlsx`;
+      const nombreArchivo = `inventario-${fecha}-JAVIER CAMPOS.xlsx`;
 
       XLSX.writeFile(workbook, nombreArchivo);
       setMessage(`✅ Archivo Excel exportado: ${nombreArchivo}`);
@@ -197,20 +197,132 @@ export default function Inventario() {
     }
   };
 
+  // Función para exportar a PDF
+  const exportarPDF = async () => {
+    if (inventarioData.length === 0) {
+      setMessage('❌ No hay datos para exportar en PDF');
+      return;
+    }
 
+    setExportandoPDF(true);
+    try {
+      // Intentar conectar con el backend
+      const response = await fetch('http://localhost:8080/api/articulos/exportar-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inventarioData)
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const fecha = new Date().toISOString().split('T')[0];
+        link.download = `inventario-${fecha}-JAVIER_CAMPOS.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        setMessage('✅ PDF descargado exitosamente.');
+      } else {
+        throw new Error('Backend no disponible');
+      }
+    } catch (error) {
+      console.log('Backend no disponible, generando PDF básico');
+      // Fallback: generar PDF básico usando window.print
+      generarPDFBasico();
+    } finally {
+      setExportandoPDF(false);
+    }
+  };
+
+  // Función fallback para generar PDF básico
+  const generarPDFBasico = () => {
+    // Crear un blob con el HTML y abrirlo como archivo temporal
+    const contenidoHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Inventario ADSO - JAVIER CAMPOS</title>
+        <meta name="description" content="Inventario ADSO - JAVIER CAMPOS">
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h1 { color: #059669; text-align: center; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f3f4f6; }
+          .fecha { text-align: center; margin: 10px 0; color: #666; }
+          .pie-pagina { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); color: #666; font-size: 12px; }
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+            @page { 
+              margin: 1cm; 
+              size: A4;
+            }
+            .pie-pagina { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>INVENTARIO COORDINACIÓN ADSO</h1>
+        <div class="fecha">Generado el: ${new Date().toLocaleDateString('es-CO')} por JAVIER CAMPOS</div>
+        <table>
+          <thead>
+            <tr>
+              ${Object.keys(inventarioData[0] || {}).map(col => `<th>${col}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${inventarioData.map((item, idx) => `
+              <tr>
+                ${Object.keys(item).map(col => {
+                  let valor = item[col as keyof typeof item];
+                  if (col === 'stockFisico') {
+                    const v = String(valor).trim().toLowerCase();
+                    valor = (v === '0' || v === 'no encontrado') ? 'No encontrado' : 'Encontrado';
+                  }
+                  return `<td>${valor}</td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="fecha">Total de elementos: ${inventarioData.length}</div>
+        <div class="pie-pagina">Inventario ADSO - JAVIER CAMPOS</div>
+      </body>
+      </html>
+    `;
+    
+    // Crear un blob y URL temporal
+    const blob = new Blob([contenidoHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    // Abrir en nueva ventana con el HTML como archivo temporal
+    const ventanaImpresion = window.open(url, '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes');
+    
+    if (ventanaImpresion) {
+      setTimeout(() => {
+        ventanaImpresion.print();
+        setMessage('✅ PDF generado. Use Ctrl+P para imprimir o guardar como PDF.');
+        // Limpiar el URL temporal después de 10 segundos
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }, 1000);
+    }
+  };
 
   // Función para buscar un elemento por placa
-  // Mejorar búsqueda: insensible a mayúsculas, ignora espacios, permite coincidencia parcial
   const buscarPorPlaca = (codigo?: string) => {
-    // Búsqueda exacta: compara como string, sin eliminar ceros a la izquierda
     const normalizarPlaca = (p: string | number | undefined) => {
       return (p ?? '').toString().replace(/\s+/g, '').toLowerCase();
     };
     const placaBuscada = normalizarPlaca(codigo ?? searchPlaca);
     let idxEncontrado = -1;
-  let itemEncontrado: InventarioItem | null = null;
+    let itemEncontrado: InventarioItem | null = null;
     for (let idx = 0; idx < inventarioData.length; idx++) {
-  const placaNormalizada = normalizarPlaca(inventarioData[idx].placa);
+      const placaNormalizada = normalizarPlaca(inventarioData[idx].placa);
       if (placaNormalizada === placaBuscada) {
         idxEncontrado = idx;
         itemEncontrado = inventarioData[idx];
@@ -220,8 +332,7 @@ export default function Inventario() {
     if (itemEncontrado && idxEncontrado !== -1) {
       setEditItem(itemEncontrado);
       setHighlightedRow(idxEncontrado);
-      setMessage(`✅ Elemento encontrado: ${itemEncontrado.descripcion ?? ''} (Placa: ${itemEncontrado.placa ?? ''})`);
-      setTimeout(() => {
+      setMessage(`✅ Elemento encontrado: ${itemEncontrado.descripcion ?? ''} (Placa: ${itemEncontrado.placa ?? ''})`);      setTimeout(() => {
         const row = document.getElementById(`row-${idxEncontrado}`);
         if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
@@ -231,6 +342,8 @@ export default function Inventario() {
       setMessage('❌ No se encontró ningún elemento con esa placa. Prueba con otra o revisa el formato.');
     }
   };
+
+
 
   // Función para manejar cambios en el formulario de edición
   const handleEditChange = (field: keyof InventarioItem, value: unknown) => {
@@ -262,8 +375,8 @@ export default function Inventario() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-          📊 Gestión de Inventario
+        <h1 className="text-3xl font-bold text-green-600 mb-8 text-center">
+          INVENTARIO COORDINACIÓN ADSO
         </h1>
 
         {/* Mensaje de estado */}
@@ -391,7 +504,7 @@ export default function Inventario() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">⚡ Acciones</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Botón de exportar Excel permanece */}
+            {/* Botón de exportar Excel */}
             <button
               onClick={exportarExcel}
               disabled={inventarioData.length === 0}
@@ -401,6 +514,19 @@ export default function Inventario() {
               Exportar Excel
             </button>
 
+            {/* Botón de exportar PDF */}
+            <button
+              onClick={exportarPDF}
+              disabled={exportandoPDF || inventarioData.length === 0}
+              className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              {exportandoPDF ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <span>📄</span>
+              )}
+              Exportar PDF
+            </button>
           </div>
         </div>
 
