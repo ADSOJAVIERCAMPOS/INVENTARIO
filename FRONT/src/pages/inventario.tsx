@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
-import EstadisticasInventario from '../components/EstadisticasInventario';
 
 interface InventarioItem {
   regional: number;
@@ -17,7 +16,6 @@ interface InventarioItem {
 
 export default function Inventario() {
   const [inventarioData, setInventarioData] = useState<InventarioItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [searchPlaca, setSearchPlaca] = useState('');
   const [editItem, setEditItem] = useState<InventarioItem | null>(null);
@@ -105,7 +103,6 @@ export default function Inventario() {
 
   // Función para obtener datos del backend
   const obtenerInventario = async () => {
-    setLoading(true);
     try {
       const response = await axios.get('http://localhost:8080/api/inventario', {
         timeout: 10000, // 10 segundos de timeout
@@ -155,8 +152,6 @@ export default function Inventario() {
       } else {
         setMessage('❌ Error desconocido.');
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -276,7 +271,7 @@ export default function Inventario() {
             </tr>
           </thead>
           <tbody>
-            ${inventarioData.map((item, idx) => `
+            ${inventarioData.map((item, _) => `
               <tr>
                 ${Object.keys(item).map(col => {
                   let valor = item[col as keyof typeof item];
