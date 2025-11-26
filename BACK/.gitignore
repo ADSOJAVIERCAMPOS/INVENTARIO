@@ -31,3 +31,19 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Variables de entorno y archivos sensibles ###
+.env
+.env.local
+.env.production
+.env.test
+*.env
+application-local.properties
+application-secret.properties
+
+### Logs ###
+logs/
+*.log
+
+### Archivos de respaldo ###
+*.backup
